@@ -1,0 +1,32 @@
+data:
+    aem_folder: '/home/sudipta/Documents/new_datasets'
+    aem_data: 'high_res_cond_clip_albers_skip_6.shp'
+    interp_data: 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
+    line_col: 'SURVEY_LIN'
+
+learning:
+    algorithm: xgboost
+    params:
+        max_depth: 10
+        learning_rate: 0.1
+        n_estimators: 10
+    weights:  # weights used if training a weighted model
+        H: 2
+        M: 1
+        L: 0.5
+
+    optimisation:
+        'max_depth': Integer(1, 15)
+        'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
+        'n_estimators': Integer(20, 200)
+        'min_child_weight': Integer(1, 10)
+        'max_delta_step': Integer(0, 10)
+        'gamma': Real(0, 0.5, prior="uniform")
+        'colsample_bytree': Real(0.3, 0.9, prior="uniform")
+        'subsample': Real(0.01, 1.0, prior='uniform')
+        'colsample_bylevel': Real(0.01, 1.0, prior='uniform')
+        'colsample_bynode': Real(0.01, 1.0, prior='uniform')
+        'reg_alpha': Real(1, 100, prior='uniform')
+        'reg_lambda': Real(0.01, 10, prior='log-uniform')
+
+

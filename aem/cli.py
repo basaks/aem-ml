@@ -1,8 +1,11 @@
 """Console script for aem."""
 import sys
 import click
+from pathlib import Path
+import geopandas as gpd
 from aem import __version__
-from aem.logger import configure_logging, aemlogger
+from aem.config import Config
+from aem.logger import configure_logging, aemlogger as log
 
 
 @click.group()
@@ -21,7 +24,21 @@ def main(verbosity: str) -> int:
               help="The model configuration file")
 def train(config: str) -> None:
     """Train a model specified by a config file."""
-    aemlogger.info(f"Training Model using config {config}")
+    log.info(f"Training Model using config {config}")
+    conf = Config(config)
+
+
+    import IPython; IPython.embed(); import sys; sys.exit()
+
+
+def load_data(conf):
+    log.info("Reading covariates...")
+    log.info("reading interp data...")
+
+    all_interp_data = gpd.GeoDataFrame.from_file(conf.interp_data)
+
+    log.info("reading covariates ...")
+    original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_data)
 
 
 if __name__ == "__main__":
