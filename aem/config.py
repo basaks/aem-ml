@@ -26,6 +26,7 @@ class Config:
     def __init__(self, yaml_file):
         with open(yaml_file, 'r') as f:
             s = yaml.safe_load(f)
+
         self.name = Path(yaml_file).stem
 
         # data
@@ -35,13 +36,15 @@ class Config:
 
         # training
         self.algorithm = s['learning']['algorithm']
-        self.model_params = s['learning']['algorithm']['params']
+        self.model_params = s['learning']['params']
 
         # model parameter optimisation
         self.opt_space = s['learning']['optimisation']
 
         # weighted model params
-        self.weight_dict = s['learning']['weights']
+        if 'weighted_model' in s['learning']:
+            self.weight_dict = s['learning']['weighted_model']['weights']
+            self.weight_col = s['learning']['weighted_model']['weight_col']
 
         # data description
         self.line_col = s['data']['line_col']

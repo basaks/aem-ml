@@ -27,8 +27,7 @@ def train(config: str) -> None:
     log.info(f"Training Model using config {config}")
     conf = Config(config)
 
-
-    import IPython; IPython.embed(); import sys; sys.exit()
+    load_data(conf)
 
 
 def load_data(conf):
@@ -39,6 +38,7 @@ def load_data(conf):
 
     log.info("reading covariates ...")
     original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_data)
+    import IPython; IPython.embed(); import sys; sys.exit()
 
 
 if __name__ == "__main__":

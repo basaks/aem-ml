@@ -10,11 +10,12 @@ learning:
         max_depth: 10
         learning_rate: 0.1
         n_estimators: 10
-    weights:  # weights used if training a weighted model
-        H: 2
-        M: 1
-        L: 0.5
-
+    weighted_model:
+        weight_col: 'BoundConf'
+        weights:
+            H: 2
+            M: 1
+            L: 0.5
     optimisation:
         'max_depth': Integer(1, 15)
         'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
