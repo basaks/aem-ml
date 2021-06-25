@@ -3,6 +3,17 @@ data:
     aem_data: 'high_res_cond_clip_albers_skip_6.shp'
     interp_data: 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
     line_col: 'SURVEY_LIN'
+    conductivity_columns_starts_with: 'cond'
+    thickness_columns_starts_with: 'thick'
+    aem_covariate_cols:
+        - 'ceno_euc_a'
+        - 'Gravity_la'
+        - 'national_W'
+        - 'relief_ele'
+        - 'relief_mrv'
+        - 'SagaWET9ce'
+        - 'elevation'
+        - 'tx_height'
 
 learning:
     algorithm: xgboost
@@ -31,3 +42,5 @@ learning:
         'reg_lambda': Real(0.01, 10, prior='log-uniform')
 
 
+output:
+    directory: .

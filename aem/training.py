@@ -1,6 +1,12 @@
 import numpy as np
 
 from sklearn.metrics import make_scorer, r2_score
+from sklearn.metrics import (
+    explained_variance_score,
+    r2_score,
+    mean_squared_error,
+    mean_absolute_error
+)
 from skopt import BayesSearchCV
 from skopt.space import Real, Integer, Categorical
 
@@ -10,6 +16,14 @@ np.random.seed(6)
 
 # Make numpy printouts easier to read.
 np.set_printoptions(precision=3, suppress=True)
+
+
+regression_metrics = {
+    'r2_score': lambda y, py, w:  r2_score(y, py, sample_weight=w),
+    'expvar': lambda y, py, w: explained_variance_score(y, py, sample_weight=w),
+    'mse': lambda y, py, w: mean_squared_error(y, py, sample_weight=w),
+    'mae': lambda y, py, w: mean_absolute_error(y, py, sample_weight=w),
+}
 
 
 def my_custom_scorer(reg, X, y, X_val, y_val, w_val):
@@ -44,6 +58,9 @@ def bayesian_optimisation(X, y, conf: Config):
     searchcv.fit(X, y)
 
 
-def train_model(X, y, conf: Config):
-    model = conf.algorithm(** conf.model_params)
-    model.fit(X, y)
+def score_model(trained_model, X, y, w=None):
+    scores = {}
+    y_pred = trained_model.predict(X)
+    for k, m in regression_metrics.items():
+        scores[k] = m(y, y_pred, w)
+    return scores
