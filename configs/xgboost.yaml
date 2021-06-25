@@ -1,7 +1,9 @@
 data:
     aem_folder: '/home/sudipta/Documents/new_datasets'
-    aem_data: 'high_res_cond_clip_albers_skip_6.shp'
+    aem_train_data: 'high_res_cond_clip_albers_skip_6.shp'
+    aem_pred_data: 'high_res_cond_clip_albers_skip_6.shp'
     interp_data: 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
+    weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
     conductivity_columns_starts_with: 'cond'
     thickness_columns_starts_with: 'thick'
@@ -14,6 +16,11 @@ data:
         - 'SagaWET9ce'
         - 'elevation'
         - 'tx_height'
+    test_train_split:
+        train: 0.6
+        val: 0.2
+        test: 0.2
+    rows: 15000
 
 learning:
     algorithm: xgboost
@@ -22,11 +29,13 @@ learning:
         learning_rate: 0.1
         n_estimators: 10
     weighted_model:
-        weight_col: 'BoundConf'
         weights:
             H: 2
             M: 1
             L: 0.5
+    numpy_seed: 10
+    include_thickness: true
+    include_conductivity_derivatives: true
     optimisation:
         'max_depth': Integer(1, 15)
         'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
@@ -43,4 +52,10 @@ learning:
 
 
 output:
-    directory: .
+    directory: out
+    train:
+        covariates_csv: true
+        true_vs_pred: true
+    pred:
+        covariates_csv: true
+        pred: true

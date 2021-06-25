@@ -34,6 +34,7 @@ def train(config: str) -> None:
     """Train a model specified by a config file."""
     log.info(f"Training Model using config {config}")
     conf = Config(config)
+    np.random.seed(conf.numpy_seed)
 
     X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, w_train_val \
         = load_data(conf)
@@ -41,7 +42,6 @@ def train(config: str) -> None:
     log.info(f"Training {conf.algorithm} model")
     model.fit(X_train_val, y_train_val, sample_weight=w_train_val)
 
-    # report model performance on screen and also save a text file
     train_scores = training.score_model(model, X_train_val, y_train_val, w_train_val)
     test_scores = training.score_model(model, X_test, y_test, w_test)
 
@@ -49,12 +49,14 @@ def train(config: str) -> None:
 
     score_string = "Training complete:\n"
 
+    # report model performance on screen
     for k, scores in all_scores.items():
         score_string += f"{k}:\n"
         for metric, score in scores.items():
             score_string += "{}\t= {}\n".format(metric, score)
     log.info(score_string)
 
+    # and also save a scores json file on disc
     with open(conf.outfile_scores, 'w') as f:
         json.dump(all_scores, f, sort_keys=True, indent=4)
 
@@ -65,46 +67,58 @@ def train(config: str) -> None:
 @main.command()
 @click.option("--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
+def model_selection(config: str) -> None:
+    pass
+
+
+@main.command()
+@click.option("--config", type=click.Path(exists=True), required=True,
+              help="The model configuration file")
 def predict(config: str) -> None:
     """Predict using a model saved on disc."""
     conf = Config(config)
-    log.info(f"Predicting using trained model file found in location {conf.outfile_state}")
-    X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test = load_data(conf)
+    log.info(f"Predicting using trained model file found in location {conf.model_file}")
+    log.info(f"Prediction covariates are read from {conf.aem_pred_data}")
 
-    with open(conf.outfile_state, 'rb') as f:
+    X_pred = utils.prepare_aem_data()
+
+    with open(conf.model_file, 'rb') as f:
         state_dict = pickle.load(f)
 
     model = state_dict["model"]
     config = state_dict["config"]
 
     log.info(f"Training {conf.algorithm} model")
-    model.predict(X_test, y_test, sample_weight=w_test)
+    y_pred = model.predict(X_pred)
 
     log.info(f"Finished predicting {conf.algorithm} model")
+    log.info("Saving predition covariates")
 
 
 def load_data(conf):
     log.info("Reading covariates...")
     log.info("reading interp data...")
+    all_interp_data = gpd.GeoDataFrame.from_file(conf.interp_data, rows=conf.shapefile_rows)
 
-    all_interp_data = gpd.GeoDataFrame.from_file(conf.interp_data)
     if conf.weighted_model:
         all_interp_data['weight'] = all_interp_data[conf.weight_col].map(conf.weight_dict)
 
     log.info("reading covariates ...")
-    original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_data)
+    original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_train_data, rows=conf.shapefile_rows)
 
     # how many lines in interp data
     lines_in_data = np.unique(all_interp_data[conf.line_col])
 
-    train_and_val_lines_in_data, test_lines_in_data = train_test_split(lines_in_data, test_size=0.2)
-    train_lines_in_data, val_lines_in_data = train_test_split(train_and_val_lines_in_data, test_size=0.25)
+    train_and_val_lines_in_data, test_lines_in_data = train_test_split(lines_in_data, test_size=conf.test_fraction)
+    train_lines_in_data, val_lines_in_data = train_test_split(train_and_val_lines_in_data,
+                                                              test_size=conf.val_fraction/(1-conf.test_fraction))
 
     all_lines = utils.create_interp_data(conf, all_interp_data, included_lines=list(lines_in_data))
-    aem_xy_and_other_covs, aem_conductivities, aem_thickness = utils.extract_required_aem_data(
-        conf, original_aem_data, all_lines, include_thickness=True, add_conductivity_derivative=True
-    )
 
+    aem_xy_and_other_covs, aem_conductivities, aem_thickness = utils.prepare_aem_data(
+        conf, original_aem_data, include_thickness=conf.include_thickness,
+        include_conductivity_derivatives=conf.include_conductivity_derivatives
+    )
     if not Path('covariates_targets_2d_weights.data').exists():
         data = utils.convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, all_lines,
                                    weighted_model=conf.weighted_model)
@@ -131,3 +145,5 @@ def load_data(conf):
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
+
+    import IPython; IPython.embed(); import sys; sys.exit()

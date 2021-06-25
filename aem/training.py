@@ -12,7 +12,6 @@ from skopt.space import Real, Integer, Categorical
 
 from aem.config import Config
 
-np.random.seed(6)
 
 # Make numpy printouts easier to read.
 np.set_printoptions(precision=3, suppress=True)

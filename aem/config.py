@@ -27,14 +27,25 @@ class Config:
 
         self.name = Path(yaml_file).stem
 
+        # output dir
+        self.output_dir = s['output']['directory']
+        Path(self.output_dir).mkdir(exist_ok=True)
+
         # data
         self.aem_folder = s['data']['aem_folder']
         self.interp_data = Path(self.aem_folder).joinpath(s['data']['interp_data'])
-        self.aem_data = Path(self.aem_folder).joinpath(s['data']['aem_data'])
+        self.aem_train_data = Path(self.aem_folder).joinpath(s['data']['aem_train_data'])
+        self.aem_pred_data = Path(self.aem_folder).joinpath(s['data']['aem_pred_data'])
+        self.shapefile_rows = s['data']['rows']
+
+        # np randomisation
+        self.numpy_seed = s['learning']['numpy_seed']
 
         # training
         self.algorithm = s['learning']['algorithm']
         self.model_params = s['learning']['params']
+        self.include_thickness = s['learning']['include_thickness']
+        self.include_conductivity_derivatives = s['learning']['include_conductivity_derivatives']
 
         # model parameter optimisation
         self.opt_space = s['learning']['optimisation']
@@ -43,7 +54,7 @@ class Config:
         if 'weighted_model' in s['learning']:
             self.weighted_model = True
             self.weight_dict = s['learning']['weighted_model']['weights']
-            self.weight_col = s['learning']['weighted_model']['weight_col']
+            self.weight_col = s['data']['weight_col']
         else:
             self.weighted_model = False
 
@@ -53,8 +64,7 @@ class Config:
         self.thickness_columns_starts_with = s['data']['thickness_columns_starts_with']
         self.aem_covariate_cols = s['data']['aem_covariate_cols']
 
-        # all_interp_data = gpd.GeoDataFrame.from_file(self.interp_data, rows=1)
-        original_aem_data = gpd.GeoDataFrame.from_file(self.aem_data, rows=1)
+        original_aem_data = gpd.GeoDataFrame.from_file(self.aem_train_data.as_posix(), rows=1)
 
         conductivity_cols = [c for c in original_aem_data.columns if c.startswith(self.conductivity_columns_starts_with)]
         d_conductivities = ['d_' + c for c in conductivity_cols]
@@ -67,7 +77,10 @@ class Config:
         self.conductivity_and_derivatives_cols = conductivity_and_derivatives_cols
 
         # co-ordination
-        self.output_dir = s['output']['directory']
-        self.outfile_state = Path(self.output_dir).joinpath(self.name + ".model")
+        self.model_file = Path(self.output_dir).joinpath(self.name + ".model")
         self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_scores.json")
 
+        # test train val split
+        self.train_fraction = s['data']['test_train_split']['train']
+        self.test_fraction = s['data']['test_train_split']['test']
+        self.val_fraction = s['data']['test_train_split']['val']

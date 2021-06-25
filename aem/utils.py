@@ -14,37 +14,26 @@ log = logging.getLogger(__name__)
 radius = 500
 dis_tol = 100  # meters, distance tolerance used
 
-# covariate_cols_without_xyz = aem_covariate_cols + ['conductivity']
-# final_cols = coords + aem_covariate_cols + ['Z_coor']
 
-
-def extract_required_aem_data(conf: Config, in_scope_aem_data, interp_data,
-                              include_thickness=False, add_conductivity_derivative=False):
+def prepare_aem_data(conf: Config, aem_data,
+                     include_thickness=False, include_conductivity_derivatives=False):
     """
     :param conf:
     :param in_scope_aem_data:
     :param interp_data: dataframe with
     :param include_thickness:
-    :param add_conductivity_derivative:
+    :param include_conductivity_derivatives:
     :return:
     """
     thickness = conf.thickness_cols
     conductivities = conf.conductivity_cols
     aem_covariate_cols = conf.aem_covariate_cols
-    # find bounding box
-    x_max, x_min, y_max, y_min = extent_of_data(interp_data)
     # use bbox to select data only for one line
-    aem_data = in_scope_aem_data[
-        (in_scope_aem_data.POINT_X < x_max + dis_tol) &
-        (in_scope_aem_data.POINT_X > x_min - dis_tol) &
-        (in_scope_aem_data.POINT_Y < y_max + dis_tol) &
-        (in_scope_aem_data.POINT_Y > y_min - dis_tol)
-        ]
     aem_data = aem_data.sort_values(by='POINT_Y', ascending=False)
     aem_data[thickness] = aem_data[thickness].cumsum(axis=1)
     conduct_cols = conductivities[:]
     thickness_cols = thickness if include_thickness else []
-    if add_conductivity_derivative:
+    if include_conductivity_derivatives:
         conductivity_diff = aem_data[conduct_cols].diff(axis=1, periods=-1)
         conductivity_diff.fillna(axis=1, method='ffill', inplace=True)
         aem_data[conf.conductivity_derivatives_cols] = conductivity_diff
@@ -56,7 +45,7 @@ def extract_required_aem_data(conf: Config, in_scope_aem_data, interp_data,
     return aem_xy_and_other_covs, aem_conductivities, aem_thickness
 
 
-def create_train_test_set(conf: Config, data, * included_interp_data):
+def create_train_test_set(conf: Config, data, *included_interp_data):
     weighted_model = conf.weighted_model
     X = data['covariates']
     y = data['targets']
@@ -72,7 +61,12 @@ def create_train_test_set(conf: Config, data, * included_interp_data):
                          ((X.POINT_X < x_max + dis_tol) & (X.POINT_X > x_min - dis_tol) &
                           (X.POINT_Y < y_max + dis_tol) & (X.POINT_Y > y_min - dis_tol))
 
-    cols = conf.conductivity_and_derivatives_cols + conf.thickness_cols + conf.aem_covariate_cols
+    cols = conf.aem_covariate_cols[:] + conf.conductivity_cols[:]
+
+    if conf.include_conductivity_derivatives:
+        cols += conf.conductivity_derivatives_cols
+    if conf.include_thickness:
+        cols += conf.thickness_cols
 
     return X[included_lines][cols], y[included_lines], w[included_lines], X[included_lines][twod_coords]
 
@@ -223,5 +217,5 @@ def plot_2d_section(X_val_line: pd.DataFrame,
 
 def export_model(model, conf: Config):
     state_dict = {"model": model, "config": conf}
-    with open(conf.outfile_state, 'wb') as f:
+    with open(conf.model_file, 'wb') as f:
         pickle.dump(state_dict, f)
