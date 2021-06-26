@@ -96,14 +96,14 @@ def predict(config: str) -> None:
 
     with open(conf.model_file, 'rb') as f:
         state_dict = pickle.load(f)
-
+    log.info(f"loaded trained model from location {conf.model_file}")
     model = state_dict["model"]
     config = state_dict["config"]
-    log.info(f"Training {conf.algorithm} model")
-    y_pred = model.predict(X_pred)
 
+    X_pred['pred'] = model.predict(X_pred)
     log.info(f"Finished predicting {conf.algorithm} model")
-    log.info("Saving predition covariates")
+    X_pred.to_csv(conf.pred_data, index=False)
+    log.info(f"Saved training data and target and prediction at {conf.train_data}")
 
 
 def load_data(conf):
