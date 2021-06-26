@@ -81,6 +81,10 @@ class Config:
         self.model_file = Path(self.output_dir).joinpath(self.name + ".model")
         self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_scores.json")
 
+        # outputs
+        self.train_data = Path(self.output_dir).joinpath(self.name + "_train.csv")
+        self.pred_data = Path(self.output_dir).joinpath(self.name + "_pred.csv")
+
         # test train val split
         self.train_fraction = s['data']['test_train_split']['train']
         self.test_fraction = s['data']['test_train_split']['test']

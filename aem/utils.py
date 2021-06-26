@@ -68,12 +68,6 @@ def create_train_test_set(conf: Config, data, *included_interp_data):
                          ((X.POINT_X < x_max + dis_tol) & (X.POINT_X > x_min - dis_tol) &
                           (X.POINT_Y < y_max + dis_tol) & (X.POINT_Y > y_min - dis_tol))
 
-    # cols = conf.aem_covariate_cols[:] + conf.conductivity_cols[:]
-    #
-    # if conf.include_conductivity_derivatives:
-    #     cols += conf.conductivity_derivatives_cols
-    # if conf.include_thickness:
-    #     cols += conf.thickness_cols
     cols = select_columns_for_model(conf)
 
     return X[included_lines][cols], y[included_lines], w[included_lines], X[included_lines][twod_coords]
@@ -134,6 +128,7 @@ def convert_to_xy(conf: Config, aem_data, interp_data):
     X = pd.DataFrame(selected)
     y = pd.Series(target_depths, name='target', index=X.index)
     w = pd.Series(target_weights, name='weight', index=X.index)
+
     return {'covariates': X, 'targets': y, 'weights': w}
 
 
@@ -232,3 +227,7 @@ def export_model(model, conf: Config):
     state_dict = {"model": model, "config": conf}
     with open(conf.model_file, 'wb') as f:
         pickle.dump(state_dict, f)
+
+
+def export_covariates(conf, ):
+    pass

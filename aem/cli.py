@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import numpy as np
 from sklearn.model_selection import train_test_split
+import pandas as pd
 import geopandas as gpd
 from aem import __version__
 from aem.config import Config
@@ -42,6 +43,8 @@ def train(config: str) -> None:
     log.info(f"Training {conf.algorithm} model")
     model.fit(X_train_val, y_train_val, sample_weight=w_train_val)
 
+    log.info(f"Finished training {conf.algorithm} model")
+
     train_scores = training.score_model(model, X_train_val, y_train_val, w_train_val)
     test_scores = training.score_model(model, X_test, y_test, w_test)
 
@@ -61,7 +64,14 @@ def train(config: str) -> None:
         json.dump(all_scores, f, sort_keys=True, indent=4)
 
     utils.export_model(model, conf)
-    log.info(f"Finished training {conf.algorithm} model")
+    log.info(f"wrote model on disc {conf.model_file}")
+
+    X['pred'] = model.predict(X)
+    X['target'] = y
+    X['weights'] = w
+    X.to_csv(conf.train_data, index=False)
+
+    log.info(f"Saved training data and target and prediction at {conf.train_data}")
 
 
 @main.command()
