@@ -36,8 +36,8 @@ def train(config: str) -> None:
     conf = Config(config)
     np.random.seed(conf.numpy_seed)
 
-    X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, w_train_val \
-        = load_data(conf)
+    X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
+        w_train_val = load_data(conf)
     model = modelmaps[conf.algorithm](**conf.model_params)
     log.info(f"Training {conf.algorithm} model")
     model.fit(X_train_val, y_train_val, sample_weight=w_train_val)
@@ -80,14 +80,21 @@ def predict(config: str) -> None:
     log.info(f"Predicting using trained model file found in location {conf.model_file}")
     log.info(f"Prediction covariates are read from {conf.aem_pred_data}")
 
-    X_pred = utils.prepare_aem_data()
+    original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_pred_data, rows=conf.shapefile_rows)
+    required_cols = conf.aem_covariate_cols[:] + conf.conductivity_cols[:]
+    if conf.include_thickness:
+        required_cols += conf.thickness_cols
+    if conf.include_conductivity_derivatives:
+        required_cols += conf.include_conductivity_derivatives
+
+    X_pred = utils.prepare_aem_data(conf, original_aem_data)
 
     with open(conf.model_file, 'rb') as f:
         state_dict = pickle.load(f)
 
     model = state_dict["model"]
     config = state_dict["config"]
-
+    import IPython; IPython.embed(); import sys; sys.exit()
     log.info(f"Training {conf.algorithm} model")
     y_pred = model.predict(X_pred)
 
@@ -115,13 +122,9 @@ def load_data(conf):
 
     all_lines = utils.create_interp_data(conf, all_interp_data, included_lines=list(lines_in_data))
 
-    aem_xy_and_other_covs, aem_conductivities, aem_thickness = utils.prepare_aem_data(
-        conf, original_aem_data, include_thickness=conf.include_thickness,
-        include_conductivity_derivatives=conf.include_conductivity_derivatives
-    )
+    aem_xy_and_other_covs = utils.prepare_aem_data(conf, original_aem_data)[utils.select_required_data_cols(conf)]
     if not Path('covariates_targets_2d_weights.data').exists():
-        data = utils.convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, all_lines,
-                                   weighted_model=conf.weighted_model)
+        data = utils.convert_to_xy(conf, aem_xy_and_other_covs, all_lines)
         log.info("saving data on disc for future use")
         pickle.dump(data, open('covariates_targets_2d_weights.data', 'wb'))
     else:
@@ -139,8 +142,10 @@ def load_data(conf):
     X_val, y_val, w_val, _ = create_train_test_set(conf, data, *val_data_lines)
     X_test, y_test, w_test, _ = create_train_test_set(conf, data, *test_data_lines)
     X_train_val, y_train_val, w_train_val, _ = create_train_test_set(conf, data, *train_data_lines, *val_data_lines)
+    X, y, w, _ = create_train_test_set(conf, data, * all_data_lines)
 
-    return X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, w_train_val
+    return X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
+           w_train_val
 
 
 if __name__ == "__main__":

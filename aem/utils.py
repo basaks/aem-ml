@@ -15,8 +15,7 @@ radius = 500
 dis_tol = 100  # meters, distance tolerance used
 
 
-def prepare_aem_data(conf: Config, aem_data,
-                     include_thickness=False, include_conductivity_derivatives=False):
+def prepare_aem_data(conf: Config, aem_data):
     """
     :param conf:
     :param in_scope_aem_data:
@@ -25,24 +24,32 @@ def prepare_aem_data(conf: Config, aem_data,
     :param include_conductivity_derivatives:
     :return:
     """
-    thickness = conf.thickness_cols
-    conductivities = conf.conductivity_cols
     aem_covariate_cols = conf.aem_covariate_cols
     # use bbox to select data only for one line
     aem_data = aem_data.sort_values(by='POINT_Y', ascending=False)
-    aem_data[thickness] = aem_data[thickness].cumsum(axis=1)
-    conduct_cols = conductivities[:]
-    thickness_cols = thickness if include_thickness else []
-    if include_conductivity_derivatives:
-        conductivity_diff = aem_data[conduct_cols].diff(axis=1, periods=-1)
-        conductivity_diff.fillna(axis=1, method='ffill', inplace=True)
-        aem_data[conf.conductivity_derivatives_cols] = conductivity_diff
-        conduct_cols = conf.conductivity_and_derivatives_cols[:]
+    aem_data[conf.thickness_cols] = aem_data[conf.thickness_cols].cumsum(axis=1)
+    conduct_cols = conf.conductivity_cols[:]
+    conductivity_diff = aem_data[conduct_cols].diff(axis=1, periods=-1)
+    conductivity_diff.fillna(axis=1, method='ffill', inplace=True)
+    aem_data[conf.conductivity_derivatives_cols] = conductivity_diff
+    return aem_data
 
-    aem_xy_and_other_covs = aem_data[twod_coords + aem_covariate_cols + conduct_cols + thickness_cols]
-    aem_conductivities = aem_data[conductivities]
-    aem_thickness = aem_data[thickness]
-    return aem_xy_and_other_covs, aem_conductivities, aem_thickness
+
+def select_required_data_cols(conf: Config):
+    cols = select_columns_for_model(conf)[:]
+    return cols + twod_coords
+
+
+def select_columns_for_model(conf: Config):
+    cols = conf.conductivity_cols[:]
+    if conf.include_aem_covariates:
+        cols += conf.aem_covariate_cols
+    if conf.include_conductivity_derivatives:
+        cols += conf.conductivity_derivatives_cols
+    if conf.include_thickness:
+        cols += conf.thickness_cols
+
+    return cols
 
 
 def create_train_test_set(conf: Config, data, *included_interp_data):
@@ -61,12 +68,13 @@ def create_train_test_set(conf: Config, data, *included_interp_data):
                          ((X.POINT_X < x_max + dis_tol) & (X.POINT_X > x_min - dis_tol) &
                           (X.POINT_Y < y_max + dis_tol) & (X.POINT_Y > y_min - dis_tol))
 
-    cols = conf.aem_covariate_cols[:] + conf.conductivity_cols[:]
-
-    if conf.include_conductivity_derivatives:
-        cols += conf.conductivity_derivatives_cols
-    if conf.include_thickness:
-        cols += conf.thickness_cols
+    # cols = conf.aem_covariate_cols[:] + conf.conductivity_cols[:]
+    #
+    # if conf.include_conductivity_derivatives:
+    #     cols += conf.conductivity_derivatives_cols
+    # if conf.include_thickness:
+    #     cols += conf.thickness_cols
+    cols = select_columns_for_model(conf)
 
     return X[included_lines][cols], y[included_lines], w[included_lines], X[included_lines][twod_coords]
 
@@ -94,14 +102,19 @@ def weighted_target(line_required: pd.DataFrame, tree: KDTree, x: np.ndarray, we
         return None, None
 
 
-def convert_to_xy(aem_xy_and_other_covs, aem_conductivities, aem_thickness, interp_data,
-                  weighted_model=False):
+def convert_to_xy(conf: Config, aem_data, interp_data):
     log.info("convert to xy and target values...")
+    thickness = conf.thickness_cols
+    conductivities = conf.conductivity_cols
+    weighted_model = conf.weighted_model
+    aem_conductivities = aem_data[conductivities]
+    aem_thickness = aem_data[thickness]
+
     selected = []
     tree = KDTree(interp_data[twod_coords])
     target_depths = []
     target_weights = []
-    for xy, c, t in zip(aem_xy_and_other_covs.iterrows(), aem_conductivities.iterrows(), aem_thickness.iterrows()):
+    for xy, c, t in zip(aem_data.iterrows(), aem_conductivities.iterrows(), aem_thickness.iterrows()):
         i, covariates_including_xy_ = xy
         j, cc = c
         k, tt = t

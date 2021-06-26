@@ -44,6 +44,7 @@ class Config:
         # training
         self.algorithm = s['learning']['algorithm']
         self.model_params = s['learning']['params']
+        self.include_aem_covariates = s['learning']['include_aem_covariates']
         self.include_thickness = s['learning']['include_thickness']
         self.include_conductivity_derivatives = s['learning']['include_conductivity_derivatives']
 
