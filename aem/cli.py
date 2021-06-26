@@ -80,21 +80,15 @@ def predict(config: str) -> None:
     log.info(f"Predicting using trained model file found in location {conf.model_file}")
     log.info(f"Prediction covariates are read from {conf.aem_pred_data}")
 
-    original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_pred_data, rows=conf.shapefile_rows)
-    required_cols = conf.aem_covariate_cols[:] + conf.conductivity_cols[:]
-    if conf.include_thickness:
-        required_cols += conf.thickness_cols
-    if conf.include_conductivity_derivatives:
-        required_cols += conf.include_conductivity_derivatives
+    pred_aem_data = gpd.GeoDataFrame.from_file(conf.aem_pred_data, rows=conf.shapefile_rows)
 
-    X_pred = utils.prepare_aem_data(conf, original_aem_data)
+    X_pred = utils.prepare_aem_data(conf, pred_aem_data)[utils.select_columns_for_model(conf)]
 
     with open(conf.model_file, 'rb') as f:
         state_dict = pickle.load(f)
 
     model = state_dict["model"]
     config = state_dict["config"]
-    import IPython; IPython.embed(); import sys; sys.exit()
     log.info(f"Training {conf.algorithm} model")
     y_pred = model.predict(X_pred)
 
