@@ -1,6 +1,6 @@
 """Console script for aem."""
 import sys
-import pickle
+import joblib
 import click
 import json
 from pathlib import Path
@@ -97,7 +97,7 @@ def predict(config: str) -> None:
     X_pred = utils.prepare_aem_data(conf, pred_aem_data)[utils.select_columns_for_model(conf)]
 
     with open(conf.model_file, 'rb') as f:
-        state_dict = pickle.load(f)
+        state_dict = joblib.load(f)
     log.info(f"loaded trained model from location {conf.model_file}")
     model = state_dict["model"]
     config = state_dict["config"]
@@ -132,10 +132,10 @@ def load_data(conf):
     if not Path('covariates_targets_2d_weights.data').exists():
         data = utils.convert_to_xy(conf, aem_xy_and_other_covs, all_lines)
         log.info("saving data on disc for future use")
-        pickle.dump(data, open('covariates_targets_2d_weights.data', 'wb'))
+        joblib.dump(data, open('covariates_targets_2d_weights.data', 'wb'))
     else:
         log.warning("Reusing data from disc!!!")
-        data = pickle.load(open('covariates_targets_2d_weights.data', 'rb'))
+        data = joblib.load(open('covariates_targets_2d_weights.data', 'rb'))
 
     train_data_lines = [create_interp_data(conf, all_interp_data, included_lines=i) for i in train_lines_in_data]
     val_data_lines = [create_interp_data(conf, all_interp_data, included_lines=i) for i in val_lines_in_data]

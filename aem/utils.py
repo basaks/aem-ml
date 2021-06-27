@@ -1,4 +1,4 @@
-import pickle
+import joblib
 import logging
 from pathlib import Path
 from typing import Tuple, Optional, List
@@ -226,7 +226,7 @@ def plot_2d_section(X_val_line: pd.DataFrame,
 def export_model(model, conf: Config):
     state_dict = {"model": model, "config": conf}
     with open(conf.model_file, 'wb') as f:
-        pickle.dump(state_dict, f)
+        joblib.dump(state_dict, f)
 
 
 def export_covariates(conf, ):

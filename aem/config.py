@@ -80,7 +80,9 @@ class Config:
 
         # co-ordination
         self.model_file = Path(self.output_dir).joinpath(self.name + ".model")
+        self.searchcv_file = Path(self.output_dir).joinpath(self.name + "_searchcv.model")
         self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_scores.json")
+        self.optimised_model_scores =  Path(self.output_dir).joinpath(self.name + "_searchcv_scores.json")
 
         # outputs
         self.train_data = Path(self.output_dir).joinpath(self.name + "_train.csv")

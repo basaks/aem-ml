@@ -1,3 +1,5 @@
+import json
+import joblib
 import numpy as np
 from sklearn.metrics import (
     explained_variance_score,
@@ -11,6 +13,7 @@ from skopt.space import Real, Integer, Categorical
 
 from aem.config import Config
 from aem.models import modelmaps
+from aem.logger import aemlogger as log
 
 
 # Make numpy printouts easier to read.
@@ -47,11 +50,36 @@ def bayesian_optimisation(X_train, y_train, w_train, X_val, y_val, w_val, conf: 
         reg,
         search_spaces=search_space,
         ** conf.opt_searchcv_params,
-        scoring=my_custom_scorer
+        scoring=my_custom_scorer,
+        fit_params={'sample_weight': w_train}
     )
+    log.info(f"Optimising params using BayesSearchCV .....")
 
     searchcv.fit(X_train, y_train)
 
+    joblib.dump(searchcv, conf.searchcv_file)
+    log.info(f"saved bayes searchcv output in {conf.searchcv_file}")
+
+    opt_model = modelmaps[conf.algorithm](** searchcv.best_params_)
+    opt_model.fit(X_train, y_train, sample_weight=w_train)
+
+    train_scores = score_model(opt_model, X_train, y_train, w_train)
+    val_scores = score_model(opt_model, X_val, y_val, w_val)
+
+    all_scores = {'train_scores': train_scores, 'val_scores': val_scores}
+
+    score_string = "Optimised model scores:\n"
+
+    # report model performance on screen
+    for k, scores in all_scores.items():
+        score_string += f"{k}:\n"
+        for metric, score in scores.items():
+            score_string += "{}\t= {}\n".format(metric, score)
+    log.info(score_string)
+
+    # and also save a scores json file on disc
+    with open(conf.optimised_model_scores, 'w') as f:
+        json.dump(all_scores, f, sort_keys=True, indent=4)
 
 
 def score_model(trained_model, X, y, w=None):
