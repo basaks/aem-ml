@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 import numpy as np
 from sklearn.model_selection import train_test_split
-import pandas as pd
 import geopandas as gpd
 from aem import __version__
 from aem.config import Config
@@ -77,8 +76,11 @@ def train(config: str) -> None:
 @main.command()
 @click.option("--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
-def model_selection(config: str) -> None:
-    pass
+def optimise(config: str) -> None:
+    conf = Config(config)
+    X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
+        w_train_val = load_data(conf)
+    training.bayesian_optimisation(X_train, y_train, w_train, X_val, y_val, w_val, conf)
 
 
 @main.command()

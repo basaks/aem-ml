@@ -49,7 +49,8 @@ class Config:
         self.include_conductivity_derivatives = s['learning']['include_conductivity_derivatives']
 
         # model parameter optimisation
-        self.opt_space = s['learning']['optimisation']
+        self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
+        self.opt_params_space = s['learning']['optimisation']['params_space']
 
         # weighted model params
         if 'weighted_model' in s['learning']:
