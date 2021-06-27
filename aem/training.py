@@ -57,7 +57,7 @@ def bayesian_optimisation(X_train, y_train, w_train, X_val, y_val, w_val, conf: 
 
     searchcv.fit(X_train, y_train)
 
-    joblib.dump(searchcv, conf.searchcv_file)
+    joblib.dump(searchcv.best_params_, conf.searchcv_file)
     log.info(f"saved bayes searchcv output in {conf.searchcv_file}")
 
     opt_model = modelmaps[conf.algorithm](** searchcv.best_params_)
