@@ -78,6 +78,7 @@ def learn(config: str) -> None:
 @click.option("--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
 def optimise(config: str) -> None:
+    """Optimise model parameters using Bayesian regression."""
     conf = Config(config)
     X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
         w_train_val = load_data(conf)
@@ -112,7 +113,7 @@ def predict(config: str) -> None:
     model = state_dict["model"]
     config = state_dict["config"]
 
-    # TODO: insert x, y coordinates and variance
+    # TODO: insert variance
     X_pred['pred'] = model.predict(X_pred)
     log.info(f"Finished predicting {conf.algorithm} model")
     X_pred.to_csv(conf.pred_data, index=False)

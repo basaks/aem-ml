@@ -1,16 +1,23 @@
 from scipy.stats import norm
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.base import BaseEstimator
+from sklearn.base import RegressorMixin
 from xgboost.sklearn import XGBRegressor
 
 
-class QuantileGradientBoosting:
+class QuantileGradientBoosting(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         alpha=0.95,
         **kwargs
     ):
+        if 'loss' in kwargs:
+            loss = kwargs.pop('loss')
+        else:
+            loss = 'ls'
+
         self.alpha = alpha
-        self.gb = GradientBoostingRegressor(loss='ls', **kwargs)
+        self.gb = GradientBoostingRegressor(loss=loss, **kwargs)
         self.gb_quantile_upper = GradientBoostingRegressor(
             loss='quantile',
             alpha=alpha,
@@ -48,5 +55,6 @@ class QuantileGradientBoosting:
 
 modelmaps = {
     'xgboost': XGBRegressor,
-    'gradientboost': QuantileGradientBoosting
+    'gradientboost': GradientBoostingRegressor,
+    'quantilegb': QuantileGradientBoosting,
 }
