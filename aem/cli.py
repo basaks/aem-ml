@@ -10,6 +10,7 @@ import geopandas as gpd
 from aem import __version__
 from aem.config import Config
 from aem import utils
+from aem.prediction import add_pred_to_data
 from aem.utils import create_interp_data, create_train_test_set
 from aem.models import modelmaps
 from aem import training
@@ -65,13 +66,7 @@ def learn(config: str) -> None:
 
     utils.export_model(model, conf)
 
-    if hasattr(model, 'predict_dist'):
-        X['pred'], X['variance'], X['lower_quantile'], X['upper_quantile'] = model.predict_dist(
-            X[model_cols], interval=conf.quantiles
-        )
-        log.info("Added variance and quantiles to output dataframe")
-    else:
-        X['pred'] = model.predict(X[model_cols])
+    add_pred_to_data(X, conf, model)
     X['target'] = y
     X['weights'] = w
     # TODO: insert variance, line number of interpretation
@@ -91,7 +86,7 @@ def optimise(config: str) -> None:
     model_cols = utils.select_columns_for_model(conf)
     model = training.bayesian_optimisation(X_train[model_cols], y_train, w_train,
                                            X_val[model_cols], y_val, w_val, conf)
-    X['pred'] = model.predict(X[model_cols])
+    add_pred_to_data(X, conf, model)
     X['target'] = y
     X['weights'] = w
     X.to_csv(conf.optimisation_data, index=False)
@@ -120,13 +115,7 @@ def predict(config: str) -> None:
     model = state_dict["model"]
     config = state_dict["config"]
 
-    # TODO: insert variance
-    if hasattr(model, 'predict_dist'):
-        X['pred'], X['variance'], X['lower_quantile'], X['upper_quantile'] = model.predict_dist(X[model_cols])
-        log.info("Added variance and quantiles to output dataframe")
-    else:
-        X['pred'] = model.predict(X[model_cols])
-
+    add_pred_to_data(X, conf, model)
     log.info(f"Finished predicting {conf.algorithm} model")
     X.to_csv(conf.pred_data, index=False)
     log.info(f"Saved training data and target and prediction at {conf.train_data}")
