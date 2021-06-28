@@ -45,20 +45,20 @@ learning:
     include_conductivity_derivatives: true
     optimisation:
         searchcv_params:
-            n_iter: 6
+            n_iter: 60
             cv: 2
             verbose: 1000
-            n_points: 3
-            n_jobs: 6
+            n_points: 10
+            n_jobs: 20
         params_space:
             'max_depth': Integer(1, 15)
             'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
             'n_estimators': Integer(10, 100)
             'subsample': Real(0.01, 1.0, prior='uniform')
             'max_features': Categorical(['auto', 'sqrt', 'log2'])
-            'min_samples_split': Integer(1, 50)
+            'min_samples_split': Integer(2, 50)
             'min_samples_leaf': Integer(1, 50)
-            'min_weight_fraction_leaf': Real(0.01, 1.0, prior='uniform')
+            'min_weight_fraction_leaf': Real(0.0, 0.5, prior='uniform')
 
 output:
     directory: out
