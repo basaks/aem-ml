@@ -67,7 +67,7 @@ def create_train_test_set(conf: Config, data, *included_interp_data):
                          ((X.POINT_X < x_max + dis_tol) & (X.POINT_X > x_min - dis_tol) &
                           (X.POINT_Y < y_max + dis_tol) & (X.POINT_Y > y_min - dis_tol))
 
-    cols = select_columns_for_model(conf)
+    cols = select_required_data_cols(conf)
 
     return X[included_lines][cols], y[included_lines], w[included_lines], X[included_lines][twod_coords]
 

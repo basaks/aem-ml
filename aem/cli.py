@@ -39,13 +39,14 @@ def learn(config: str) -> None:
     X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
         w_train_val = load_data(conf)
     model = modelmaps[conf.algorithm](**conf.model_params)
+    model_cols = utils.select_columns_for_model(conf)
     log.info(f"Training {conf.algorithm} model")
-    model.fit(X_train_val, y_train_val, sample_weight=w_train_val)
+    model.fit(X_train_val[model_cols], y_train_val, sample_weight=w_train_val)
 
     log.info(f"Finished training {conf.algorithm} model")
 
-    train_scores = training.score_model(model, X_train_val, y_train_val, w_train_val)
-    test_scores = training.score_model(model, X_test, y_test, w_test)
+    train_scores = training.score_model(model, X_train_val[model_cols], y_train_val, w_train_val)
+    test_scores = training.score_model(model, X_test[model_cols], y_test, w_test)
 
     all_scores = {'test_scores': test_scores, 'train_scores': train_scores}
 
@@ -64,9 +65,10 @@ def learn(config: str) -> None:
 
     utils.export_model(model, conf)
 
-    X['pred'] = model.predict(X)
+    X['pred'] = model.predict(X[model_cols])
     X['target'] = y
     X['weights'] = w
+    # TODO: insert variance, line number of interpretation
     X.to_csv(conf.train_data, index=False)
 
     log.info(f"Saved training data and target and prediction at {conf.train_data}")
@@ -79,7 +81,14 @@ def optimise(config: str) -> None:
     conf = Config(config)
     X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
         w_train_val = load_data(conf)
-    training.bayesian_optimisation(X_train, y_train, w_train, X_val, y_val, w_val, conf)
+    model_cols = utils.select_columns_for_model(conf)
+    model = training.bayesian_optimisation(X_train[model_cols], y_train, w_train,
+                                           X_val[model_cols], y_val, w_val, conf)
+    X['pred'] = model.predict(X[model_cols])
+    X['target'] = y
+    X['weights'] = w
+    X.to_csv(conf.optimisation_data, index=False)
+
     log.info("Finished optimisation of model parameters!")
 
 
@@ -103,6 +112,7 @@ def predict(config: str) -> None:
     model = state_dict["model"]
     config = state_dict["config"]
 
+    # TODO: insert x, y coordinates and variance
     X_pred['pred'] = model.predict(X_pred)
     log.info(f"Finished predicting {conf.algorithm} model")
     X_pred.to_csv(conf.pred_data, index=False)
@@ -116,6 +126,8 @@ def load_data(conf):
 
     if conf.weighted_model:
         all_interp_data['weight'] = all_interp_data[conf.weight_col].map(conf.weight_dict)
+
+    # TODO: generate multiple segments from same interpretation line
 
     log.info("reading covariates ...")
     original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_train_data, rows=conf.shapefile_rows)

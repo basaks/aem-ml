@@ -62,16 +62,16 @@ class Config:
 
         # data description
         self.line_col = s['data']['line_col']
-        self.conductivity_columns_starts_with = s['data']['conductivity_columns_starts_with']
-        self.thickness_columns_starts_with = s['data']['thickness_columns_starts_with']
+        self.conductivity_columns_prefix = s['data']['conductivity_columns_prefix']
+        self.thickness_columns_prefix = s['data']['thickness_columns_prefix']
         self.aem_covariate_cols = s['data']['aem_covariate_cols']
 
         original_aem_data = gpd.GeoDataFrame.from_file(self.aem_train_data.as_posix(), rows=1)
 
-        conductivity_cols = [c for c in original_aem_data.columns if c.startswith(self.conductivity_columns_starts_with)]
+        conductivity_cols = [c for c in original_aem_data.columns if c.startswith(self.conductivity_columns_prefix)]
         d_conductivities = ['d_' + c for c in conductivity_cols]
         conductivity_and_derivatives_cols = conductivity_cols + d_conductivities
-        thickness_cols = [t for t in original_aem_data.columns if t.startswith(self.thickness_columns_starts_with)]
+        thickness_cols = [t for t in original_aem_data.columns if t.startswith(self.thickness_columns_prefix)]
 
         self.thickness_cols = thickness_cols
         self.conductivity_cols = conductivity_cols
@@ -84,10 +84,11 @@ class Config:
         self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_searchcv_params.json")
         self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_searchcv.model")
         self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_scores.json")
-        self.optimised_model_scores =  Path(self.output_dir).joinpath(self.name + "_searchcv_scores.json")
+        self.optimised_model_scores = Path(self.output_dir).joinpath(self.name + "_searchcv_scores.json")
 
         # outputs
         self.train_data = Path(self.output_dir).joinpath(self.name + "_train.csv")
+        self.optimisation_data = Path(self.output_dir).joinpath(self.name + "_optimisation.csv")
         self.pred_data = Path(self.output_dir).joinpath(self.name + "_pred.csv")
 
         # test train val split

@@ -86,6 +86,7 @@ def bayesian_optimisation(X_train, y_train, w_train, X_val, y_val, w_val, conf: 
     with open(conf.optimised_model_scores, 'w') as f:
         json.dump(all_scores, f, sort_keys=True, indent=4)
         log.info(f"Saved optimised model scores in file {conf.optimised_model_scores}")
+    return opt_model
 
 
 def score_model(trained_model, X, y, w=None):

@@ -5,8 +5,8 @@ data:
     interp_data: 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
-    conductivity_columns_prefix: 'cond'
-    thickness_columns_prefix: 'thick'
+    conductivity_columns_starts_with: 'cond'
+    thickness_columns_starts_with: 'thick'
     aem_covariate_cols:
         - 'ceno_euc_a'
         - 'Gravity_la'
@@ -22,24 +22,17 @@ data:
         test: 0.2
     rows: -1
 
-# will run n_iter * cv number of jobs
-# n_iter: Number of parameter settings that are sampled.
-#n_jobs: int, default=1
-#    Number of jobs to run in parallel. At maximum there are
-#    ``n_points`` times ``cv`` jobs available during each iteration.
-#
-#n_points: int, default=1
-#    Number of parameter settings to sample in parallel. If this does
-#    not align with ``n_iter``, the last iteration will sample less
-#    points.
-
 learning:
-    algorithm: xgboost
+    algorithm: gradientboost
     params:
-        objective: 'reg:squarederror'
         max_depth: 10
         learning_rate: 0.1
         n_estimators: 10
+        subsample: 0.8
+        min_samples_split: 2
+        min_samples_leaf: 2
+        min_weight_fraction_leaf: 0.05
+        max_features: "auto"
     weighted_model:
         weights:
             H: 2
@@ -59,7 +52,7 @@ learning:
         params_space:
             'max_depth': Integer(1, 15)
             'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
-            'n_estimators': Integer(2, 20)
+            'n_estimators': Integer(20, 200)
             'min_child_weight': Integer(1, 10)
             'max_delta_step': Integer(0, 10)
             'gamma': Real(0, 0.5, prior="uniform")
@@ -76,7 +69,6 @@ output:
     train:
         covariates_csv: true
         true_vs_pred: true
-        feature_ranking: true
     pred:
         optimised_model: true
         covariates_csv: true
