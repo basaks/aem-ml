@@ -25,16 +25,36 @@ data:
 learning:
     algorithm: quantilegb
     params:
-        loss: 'ls'
-        max_depth: 10
-        learning_rate: 0.1
-        n_estimators: 10
-        subsample: 0.8
-        min_samples_split: 2
-        min_samples_leaf: 2
-        min_weight_fraction_leaf: 0.05
-        max_features: "auto"
-        alpha: 0.95
+        mean_model_params:
+            loss: 'ls'
+            max_depth: 10
+            learning_rate: 0.1
+            n_estimators: 10
+            subsample: 0.8
+            min_samples_split: 2
+            min_samples_leaf: 2
+            min_weight_fraction_leaf: 0.05
+            max_features: "auto"
+        upper_quantile_params:
+            loss: 'quantile'
+            alpha: 0.95
+            learning_rate: 0.1
+            n_estimators: 10
+            subsample: 0.8
+            min_samples_split: 2
+            min_samples_leaf: 2
+            min_weight_fraction_leaf: 0.05
+            max_features: "auto"
+        lower_quantile_params:
+            loss: 'quantile'
+            alpha: 0.05
+            learning_rate: 0.1
+            n_estimators: 10
+            subsample: 0.8
+            min_samples_split: 2
+            min_samples_leaf: 2
+            min_weight_fraction_leaf: 0.05
+            max_features: "auto"
     weighted_model:
         weights:
             H: 2
@@ -44,22 +64,6 @@ learning:
     include_aem_covariates: true
     include_thickness: true
     include_conductivity_derivatives: true
-    optimisation:
-        searchcv_params:
-            n_iter: 6
-            cv: 2
-            verbose: 1000
-            n_points: 3
-            n_jobs: 6
-        params_space:
-            'max_depth': Integer(1, 15)
-            'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
-            'n_estimators': Integer(10, 100)
-            'subsample': Real(0.01, 1.0, prior='uniform')
-            'max_features': Categorical(['auto', 'sqrt', 'log2'])
-            'min_samples_split': Integer(1, 50)
-            'min_samples_leaf': Integer(1, 50)
-            'min_weight_fraction_leaf': Real(0.01, 1.0, prior='uniform')
 
 output:
     directory: out
@@ -67,6 +71,7 @@ output:
         covariates_csv: true
         true_vs_pred: true
     pred:
+        quantiles: 0.95
         optimised_model: true
         covariates_csv: true
         pred: true

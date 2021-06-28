@@ -65,7 +65,13 @@ def learn(config: str) -> None:
 
     utils.export_model(model, conf)
 
-    X['pred'] = model.predict(X[model_cols])
+    if hasattr(model, 'predict_dist'):
+        X['pred'], X['variance'], X['lower_quantile'], X['upper_quantile'] = model.predict_dist(
+            X[model_cols], interval=conf.quantiles
+        )
+        log.info("Added variance and quantiles to output dataframe")
+    else:
+        X['pred'] = model.predict(X[model_cols])
     X['target'] = y
     X['weights'] = w
     # TODO: insert variance, line number of interpretation
@@ -104,7 +110,8 @@ def predict(config: str) -> None:
 
     pred_aem_data = gpd.GeoDataFrame.from_file(conf.aem_pred_data, rows=conf.shapefile_rows)
 
-    X_pred = utils.prepare_aem_data(conf, pred_aem_data)[utils.select_columns_for_model(conf)]
+    model_cols = utils.select_columns_for_model(conf)
+    X = utils.prepare_aem_data(conf, pred_aem_data)[model_cols]
 
     model_file = conf.optimised_model_file if conf.optimised_model else conf.model_file
     with open(model_file, 'rb') as f:
@@ -114,9 +121,14 @@ def predict(config: str) -> None:
     config = state_dict["config"]
 
     # TODO: insert variance
-    X_pred['pred'] = model.predict(X_pred)
+    if hasattr(model, 'predict_dist'):
+        X['pred'], X['variance'], X['lower_quantile'], X['upper_quantile'] = model.predict_dist(X[model_cols])
+        log.info("Added variance and quantiles to output dataframe")
+    else:
+        X['pred'] = model.predict(X[model_cols])
+
     log.info(f"Finished predicting {conf.algorithm} model")
-    X_pred.to_csv(conf.pred_data, index=False)
+    X.to_csv(conf.pred_data, index=False)
     log.info(f"Saved training data and target and prediction at {conf.train_data}")
 
 

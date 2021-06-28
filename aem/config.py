@@ -49,8 +49,9 @@ class Config:
         self.include_conductivity_derivatives = s['learning']['include_conductivity_derivatives']
 
         # model parameter optimisation
-        self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
-        self.opt_params_space = s['learning']['optimisation']['params_space']
+        if 'optimisation' in s['learning']:
+            self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
+            self.opt_params_space = s['learning']['optimisation']['params_space']
 
         # weighted model params
         if 'weighted_model' in s['learning']:
@@ -90,6 +91,7 @@ class Config:
         self.train_data = Path(self.output_dir).joinpath(self.name + "_train.csv")
         self.optimisation_data = Path(self.output_dir).joinpath(self.name + "_optimisation.csv")
         self.pred_data = Path(self.output_dir).joinpath(self.name + "_pred.csv")
+        self.quantiles = s['output']['pred']['quantiles']
 
         # test train val split
         self.train_fraction = s['data']['test_train_split']['train']

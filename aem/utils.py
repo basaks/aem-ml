@@ -23,8 +23,6 @@ def prepare_aem_data(conf: Config, aem_data):
     :param include_conductivity_derivatives:
     :return:
     """
-    aem_covariate_cols = conf.aem_covariate_cols
-    # use bbox to select data only for one line
     aem_data = aem_data.sort_values(by='POINT_Y', ascending=False)
     aem_data[conf.thickness_cols] = aem_data[conf.thickness_cols].cumsum(axis=1)
     conduct_cols = conf.conductivity_cols[:]
