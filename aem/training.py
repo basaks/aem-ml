@@ -11,6 +11,7 @@ from sklearn.metrics import (
 from skopt import BayesSearchCV
 from skopt.space import Real, Integer, Categorical
 
+from aem import utils
 from aem.config import Config
 from aem.models import modelmaps
 from aem.logger import aemlogger as log
@@ -57,11 +58,15 @@ def bayesian_optimisation(X_train, y_train, w_train, X_val, y_val, w_val, conf: 
 
     searchcv.fit(X_train, y_train)
 
-    joblib.dump(searchcv.best_params_, conf.searchcv_file)
-    log.info(f"saved bayes searchcv output in {conf.searchcv_file}")
+    with open(conf.optimised_model_params, 'w') as f:
+        json.dump(searchcv.best_params_, f, sort_keys=True, indent=4)
+        log.info(f"Saved bayesian search optimised params in {conf.optimised_model_params}")
 
+    log.info("Now training final model using the optimised model params")
     opt_model = modelmaps[conf.algorithm](** searchcv.best_params_)
     opt_model.fit(X_train, y_train, sample_weight=w_train)
+
+    utils.export_model(opt_model, conf)
 
     train_scores = score_model(opt_model, X_train, y_train, w_train)
     val_scores = score_model(opt_model, X_val, y_val, w_val)
@@ -80,6 +85,7 @@ def bayesian_optimisation(X_train, y_train, w_train, X_val, y_val, w_val, conf: 
     # and also save a scores json file on disc
     with open(conf.optimised_model_scores, 'w') as f:
         json.dump(all_scores, f, sort_keys=True, indent=4)
+        log.info(f"Saved optimised model scores in file {conf.optimised_model_scores}")
 
 
 def score_model(trained_model, X, y, w=None):

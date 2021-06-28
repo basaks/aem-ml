@@ -30,7 +30,7 @@ def main(verbosity: str) -> int:
 @main.command()
 @click.option("--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
-def train(config: str) -> None:
+def learn(config: str) -> None:
     """Train a model specified by a config file."""
     log.info(f"Training Model using config {config}")
     conf = Config(config)
@@ -63,7 +63,6 @@ def train(config: str) -> None:
         json.dump(all_scores, f, sort_keys=True, indent=4)
 
     utils.export_model(model, conf)
-    log.info(f"wrote model on disc {conf.model_file}")
 
     X['pred'] = model.predict(X)
     X['target'] = y
@@ -81,6 +80,7 @@ def optimise(config: str) -> None:
     X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
         w_train_val = load_data(conf)
     training.bayesian_optimisation(X_train, y_train, w_train, X_val, y_val, w_val, conf)
+    log.info("Finished optimisation of model parameters!")
 
 
 @main.command()
@@ -96,7 +96,8 @@ def predict(config: str) -> None:
 
     X_pred = utils.prepare_aem_data(conf, pred_aem_data)[utils.select_columns_for_model(conf)]
 
-    with open(conf.model_file, 'rb') as f:
+    model_file = conf.optimised_model_file if conf.optimised_model else conf.model_file
+    with open(model_file, 'rb') as f:
         state_dict = joblib.load(f)
     log.info(f"loaded trained model from location {conf.model_file}")
     model = state_dict["model"]

@@ -1,5 +1,4 @@
 import joblib
-import logging
 from pathlib import Path
 from typing import Tuple, Optional, List
 
@@ -7,8 +6,8 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import KDTree
 from aem.config import twod_coords, threed_coords, Config
+from aem.logger import aemlogger as log
 
-log = logging.getLogger(__name__)
 
 # distance within which an interpretation point is considered to contribute to target values
 radius = 500
@@ -225,8 +224,10 @@ def plot_2d_section(X_val_line: pd.DataFrame,
 
 def export_model(model, conf: Config):
     state_dict = {"model": model, "config": conf}
-    with open(conf.model_file, 'wb') as f:
+    model_file_name = conf.optimised_model_file if conf.optimised_model else conf.model_file
+    with open(model_file_name, 'wb') as f:
         joblib.dump(state_dict, f)
+        log.info(f"Wrote model on disc {model_file_name}")
 
 
 def export_covariates(conf, ):

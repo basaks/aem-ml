@@ -79,8 +79,10 @@ class Config:
         self.conductivity_and_derivatives_cols = conductivity_and_derivatives_cols
 
         # co-ordination
+        self.optimised_model = s['output']['pred']['optimised_model']
         self.model_file = Path(self.output_dir).joinpath(self.name + ".model")
-        self.searchcv_file = Path(self.output_dir).joinpath(self.name + "_searchcv.model")
+        self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_searchcv_params.json")
+        self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_searchcv.model")
         self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_scores.json")
         self.optimised_model_scores =  Path(self.output_dir).joinpath(self.name + "_searchcv_scores.json")
 
