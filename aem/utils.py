@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Tuple, Optional, List
 
 import numpy as np
+from scipy.signal import medfilt2d
 import pandas as pd
 from sklearn.neighbors import KDTree
 from aem.config import twod_coords, threed_coords, Config
@@ -23,13 +24,24 @@ def prepare_aem_data(conf: Config, aem_data):
     :param include_conductivity_derivatives:
     :return:
     """
-    aem_data = aem_data.sort_values(by='POINT_Y', ascending=False)
+    aem_data = aem_data.sort_values(by=['POINT_Y'], ascending=False)
+    if conf.smooth_twod_covariates:
+        aem_data[conf.conductivity_cols] = apply_twod_median_filter(conf, aem_data[conf.conductivity_cols])
+
     aem_data[conf.thickness_cols] = aem_data[conf.thickness_cols].cumsum(axis=1)
-    conduct_cols = conf.conductivity_cols[:]
-    conductivity_diff = aem_data[conduct_cols].diff(axis=1, periods=-1)
+    conductivity_diff = aem_data[conf.conductivity_cols].diff(axis=1, periods=-1)
     conductivity_diff.fillna(axis=1, method='ffill', inplace=True)
     aem_data[conf.conductivity_derivatives_cols] = conductivity_diff
     return aem_data
+
+
+def apply_twod_median_filter(conf: Config, aem_conductivities: pd.DataFrame):
+    kernel_size = conf.smooth_covariates_kernel_size
+    log.info(f"smooth conductivity data using scipy.signal.medfilt2d using kernel size {kernel_size}")
+    aem_data = aem_conductivities.to_numpy()
+    aem_data = medfilt2d(aem_data, kernel_size=kernel_size)
+    df = pd.DataFrame(aem_data, columns=aem_conductivities.columns, index=aem_conductivities.index)
+    return df
 
 
 def select_required_data_cols(conf: Config):
@@ -95,21 +107,14 @@ def weighted_target(line_required: pd.DataFrame, tree: KDTree, x: np.ndarray, we
 
 def convert_to_xy(conf: Config, aem_data, interp_data):
     log.info("convert to xy and target values...")
-    thickness = conf.thickness_cols
-    conductivities = conf.conductivity_cols
     weighted_model = conf.weighted_model
-    aem_conductivities = aem_data[conductivities]
-    aem_thickness = aem_data[thickness]
 
     selected = []
     tree = KDTree(interp_data[twod_coords])
     target_depths = []
     target_weights = []
-    for xy, c, t in zip(aem_data.iterrows(), aem_conductivities.iterrows(), aem_thickness.iterrows()):
+    for xy in aem_data.iterrows():
         i, covariates_including_xy_ = xy
-        j, cc = c
-        k, tt = t
-        assert i == j == k
         x_y = covariates_including_xy_[twod_coords].values.reshape(1, -1)
         y, w = weighted_target(interp_data, tree, x_y, weighted_model)
         if y is not None:
@@ -220,13 +225,16 @@ def plot_2d_section(X_val_line: pd.DataFrame,
     plt.show()
 
 
-def export_model(model, conf: Config):
+def export_model(model, conf: Config, learn=True):
     state_dict = {"model": model, "config": conf}
-    model_file_name = conf.optimised_model_file if conf.optimised_model else conf.model_file
-    with open(model_file_name, 'wb') as f:
+    model_file = conf.optimised_model_file if (conf.optimised_model and not learn) else conf.model_file
+    with open(model_file, 'wb') as f:
         joblib.dump(state_dict, f)
-        log.info(f"Wrote model on disc {model_file_name}")
+        log.info(f"Wrote model on disc {model_file}")
 
 
-def export_covariates(conf, ):
-    pass
+def import_model(conf, learn=True):
+    model_file = conf.optimised_model_file if (conf.optimised_model and not learn) else conf.model_file
+    with open(model_file, 'rb') as f:
+        state_dict = joblib.load(f)
+    return state_dict

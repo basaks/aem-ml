@@ -65,6 +65,8 @@ learning:
     include_aem_covariates: true
     include_thickness: true
     include_conductivity_derivatives: true
+    smooth_twod_covariates: true
+    smooth_covariates_kernel_size: 5
 
 output:
     directory: out

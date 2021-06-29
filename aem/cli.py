@@ -1,20 +1,18 @@
 """Console script for aem."""
 import sys
-import joblib
 import click
 import json
-from pathlib import Path
 import numpy as np
-from sklearn.model_selection import train_test_split
 import geopandas as gpd
 from aem import __version__
 from aem.config import Config
 from aem import utils
+from aem.data import load_data
 from aem.prediction import add_pred_to_data
-from aem.utils import create_interp_data, create_train_test_set
 from aem.models import modelmaps
 from aem import training
 from aem.logger import configure_logging, aemlogger as log
+from aem.utils import import_model
 
 
 @click.group()
@@ -64,7 +62,7 @@ def learn(config: str) -> None:
     with open(conf.outfile_scores, 'w') as f:
         json.dump(all_scores, f, sort_keys=True, indent=4)
 
-    utils.export_model(model, conf)
+    utils.export_model(model, conf, learn=True)
 
     add_pred_to_data(X, conf, model)
     X['target'] = y
@@ -95,9 +93,11 @@ def optimise(config: str) -> None:
 
 
 @main.command()
-@click.option("--config", type=click.Path(exists=True), required=True,
+@click.option("-c", "--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
-def predict(config: str) -> None:
+@click.option('--model-type',
+              type=click.Choice(['learn', 'optimised'], case_sensitive=False))
+def predict(config: str, model_type: str) -> None:
     """Predict using a model saved on disc."""
     conf = Config(config)
     log.info(f"Predicting using trained model file found in location {conf.model_file}")
@@ -107,10 +107,8 @@ def predict(config: str) -> None:
 
     model_cols = utils.select_columns_for_model(conf)
     X = utils.prepare_aem_data(conf, pred_aem_data)[model_cols]
-
-    model_file = conf.optimised_model_file if conf.optimised_model else conf.model_file
-    with open(model_file, 'rb') as f:
-        state_dict = joblib.load(f)
+    learn = model_type == 'learn'
+    state_dict = import_model(conf, learn=learn)
     log.info(f"loaded trained model from location {conf.model_file}")
     model = state_dict["model"]
     config = state_dict["config"]
@@ -119,60 +117,6 @@ def predict(config: str) -> None:
     log.info(f"Finished predicting {conf.algorithm} model")
     X.to_csv(conf.pred_data, index=False)
     log.info(f"Saved training data and target and prediction at {conf.train_data}")
-
-
-def load_data(conf):
-    log.info("Reading covariates...")
-    log.info("reading interp data...")
-    all_interp_data = gpd.GeoDataFrame.from_file(conf.interp_data, rows=conf.shapefile_rows)
-
-    if conf.weighted_model:
-        all_interp_data['weight'] = all_interp_data[conf.weight_col].map(conf.weight_dict)
-
-    # TODO: xgboost quantiles (0)
-    # TODO: generate multiple segments from same survey line (2)
-    # todo: add weights to target shapefile (3)
-    # TODO: different search radius for different targets (3)
-    # TODO: geology/polygon impact (4)
-    # TODO: smooth covariates before training with toggle (1)
-    # TODO: Scaling of covariates and targets (5)
-
-    log.info("reading covariates ...")
-    original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_train_data, rows=conf.shapefile_rows)
-
-    # how many lines in interp data
-    lines_in_data = np.unique(all_interp_data[conf.line_col])
-
-    train_and_val_lines_in_data, test_lines_in_data = train_test_split(lines_in_data, test_size=conf.test_fraction)
-    train_lines_in_data, val_lines_in_data = train_test_split(train_and_val_lines_in_data,
-                                                              test_size=conf.val_fraction/(1-conf.test_fraction))
-
-    all_lines = utils.create_interp_data(conf, all_interp_data, included_lines=list(lines_in_data))
-
-    aem_xy_and_other_covs = utils.prepare_aem_data(conf, original_aem_data)[utils.select_required_data_cols(conf)]
-    if not Path('covariates_targets_2d_weights.data').exists():
-        data = utils.convert_to_xy(conf, aem_xy_and_other_covs, all_lines)
-        log.info("saving data on disc for future use")
-        joblib.dump(data, open('covariates_targets_2d_weights.data', 'wb'))
-    else:
-        log.warning("Reusing data from disc!!!")
-        data = joblib.load(open('covariates_targets_2d_weights.data', 'rb'))
-
-    train_data_lines = [create_interp_data(conf, all_interp_data, included_lines=i) for i in train_lines_in_data]
-    val_data_lines = [create_interp_data(conf, all_interp_data, included_lines=i) for i in val_lines_in_data]
-    test_data_lines = [create_interp_data(conf, all_interp_data, included_lines=i) for i in test_lines_in_data]
-
-    all_data_lines = train_data_lines + val_data_lines + test_data_lines
-
-    X_train, y_train, w_train, _ = create_train_test_set(conf, data, *train_data_lines)
-
-    X_val, y_val, w_val, _ = create_train_test_set(conf, data, *val_data_lines)
-    X_test, y_test, w_test, _ = create_train_test_set(conf, data, *test_data_lines)
-    X_train_val, y_train_val, w_train_val, _ = create_train_test_set(conf, data, *train_data_lines, *val_data_lines)
-    X, y, w, _ = create_train_test_set(conf, data, * all_data_lines)
-
-    return X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
-           w_train_val
 
 
 if __name__ == "__main__":

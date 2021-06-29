@@ -47,6 +47,8 @@ class Config:
         self.include_aem_covariates = s['learning']['include_aem_covariates']
         self.include_thickness = s['learning']['include_thickness']
         self.include_conductivity_derivatives = s['learning']['include_conductivity_derivatives']
+        self.smooth_twod_covariates = s['learning']['smooth_twod_covariates']
+        self.smooth_covariates_kernel_size = s['learning']['smooth_covariates_kernel_size']
 
         # model parameter optimisation
         if 'optimisation' in s['learning']:

@@ -66,7 +66,7 @@ def bayesian_optimisation(X_train, y_train, w_train, X_val, y_val, w_val, conf: 
     opt_model = modelmaps[conf.algorithm](** searchcv.best_params_)
     opt_model.fit(X_train, y_train, sample_weight=w_train)
 
-    utils.export_model(opt_model, conf)
+    utils.export_model(opt_model, conf, learn=False)
 
     train_scores = score_model(opt_model, X_train, y_train, w_train)
     val_scores = score_model(opt_model, X_val, y_val, w_val)

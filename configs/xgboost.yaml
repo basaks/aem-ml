@@ -21,7 +21,7 @@ data:
         train: 0.6
         val: 0.2
         test: 0.2
-    rows: 15000
+    rows: 30000
 
 # will run n_iter * cv number of jobs
 # n_iter: Number of parameter settings that are sampled.
@@ -50,6 +50,8 @@ learning:
     include_aem_covariates: true
     include_thickness: true
     include_conductivity_derivatives: true
+    smooth_twod_covariates: true
+    smooth_covariates_kernel_size: 5
     optimisation:
         searchcv_params:
             n_iter: 6
