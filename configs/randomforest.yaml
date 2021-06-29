@@ -1,8 +1,9 @@
 data:
     aem_folder: '/home/sudipta/Documents/new_datasets'
-    aem_train_data: 'high_res_cond_clip_albers_skip_6.shp'
-    aem_pred_data: 'high_res_cond_clip_albers_skip_6.shp'
-    interp_data: 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
+    train_data:
+        aem_train_data: 'high_res_cond_clip_albers_skip_6.shp'
+        targets: 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
+    apply_model: 'high_res_cond_clip_albers_skip_6.shp'
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'

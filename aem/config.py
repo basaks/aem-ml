@@ -33,9 +33,9 @@ class Config:
 
         # data
         self.aem_folder = s['data']['aem_folder']
-        self.interp_data = Path(self.aem_folder).joinpath(s['data']['interp_data'])
-        self.aem_train_data = Path(self.aem_folder).joinpath(s['data']['aem_train_data'])
-        self.aem_pred_data = Path(self.aem_folder).joinpath(s['data']['aem_pred_data'])
+        self.interp_data = Path(self.aem_folder).joinpath(s['data']['train_data']['targets'])
+        self.aem_train_data = Path(self.aem_folder).joinpath(s['data']['train_data']['aem_train_data'])
+        self.aem_pred_data = Path(self.aem_folder).joinpath(s['data']['apply_model'])
         self.shapefile_rows = s['data']['rows']
 
         # np randomisation
