@@ -69,7 +69,7 @@ def learn(config: str) -> None:
     add_pred_to_data(X, conf, model)
     X['target'] = y
     X['weights'] = w
-    # TODO: insert variance, line number of interpretation
+    # TODO: insert line number of interpretation
     X.to_csv(conf.train_data, index=False)
 
     log.info(f"Saved training data and target and prediction at {conf.train_data}")
@@ -129,7 +129,13 @@ def load_data(conf):
     if conf.weighted_model:
         all_interp_data['weight'] = all_interp_data[conf.weight_col].map(conf.weight_dict)
 
-    # TODO: generate multiple segments from same interpretation line
+    # TODO: xgboost quantiles (0)
+    # TODO: generate multiple segments from same survey line (2)
+    # todo: add weights to target shapefile (3)
+    # TODO: different search radius for different targets (3)
+    # TODO: geology/polygon impact (4)
+    # TODO: smooth covariates before training with toggle (1)
+    # TODO: Scaling of covariates and targets (5)
 
     log.info("reading covariates ...")
     original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_train_data, rows=conf.shapefile_rows)
