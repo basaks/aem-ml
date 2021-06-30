@@ -13,7 +13,7 @@ from aem.logger import aemlogger as log
 from aem.utils import create_interp_data, create_train_test_set
 
 
-def find_same_line(aem_data: pd.DataFrame, conf: Config) -> pd.DataFrame:
+def split_flight_lines_into_multiple_lines(aem_data: pd.DataFrame, conf: Config) -> pd.DataFrame:
     """
     :param aem_data: aem training data
     :param conf: Config instance
@@ -25,7 +25,7 @@ def find_same_line(aem_data: pd.DataFrame, conf: Config) -> pd.DataFrame:
     dbscan = DBSCAN(eps=conf.aem_line_dbscan_eps, n_jobs=-1, min_samples=10)
     # t0 = time.time()
     dbscan.fit(X)
-    line_no = dbscan.labels_.astype(int)
+    line_no = dbscan.labels_.astype(np.uint16)
     rc_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # list of colours
     colors = np.array(list(islice(cycle(rc_colors), int(max(line_no) + 1))))
     # add black color for outliers (if any)
@@ -40,7 +40,9 @@ def find_same_line(aem_data: pd.DataFrame, conf: Config) -> pd.DataFrame:
 
     plt.savefig(conf.aem_lines_plot)
 
-    aem_data['line_no'] = line_no
+    aem_data['cluster_line_no'] = line_no
+
+    aem_data = aem_data.groupby('cluster_line_no').apply(utils.add_delta, conf=conf)
     return aem_data
 
 
@@ -66,7 +68,7 @@ def load_data(conf: Config):
     all_interp_training_data = pd.concat(all_interp_training_datasets, axis=0)
     original_aem_data = pd.concat(original_aem_datasets, axis=0)
 
-    find_same_line(original_aem_data, conf)
+    original_aem_data = split_flight_lines_into_multiple_lines(original_aem_data, conf)
 
     # how many lines in interp data
     lines_in_data = np.unique(all_interp_training_data[conf.line_col])

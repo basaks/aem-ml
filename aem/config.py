@@ -39,6 +39,7 @@ class Config:
         self.aem_pred_data = Path(self.aem_folder).joinpath(s['data']['apply_model'])
         self.shapefile_rows = s['data']['rows']
         self.aem_line_dbscan_eps = s['data']['aem_line_scan_radius']
+        self.aem_line_splits = s['data']['aem_line_splits']
 
         # np randomisation
         self.numpy_seed = s['learning']['numpy_seed']

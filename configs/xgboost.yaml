@@ -21,8 +21,10 @@ data:
         - 'SagaWET9ce'
         - 'elevation'
         - 'tx_height'
-    # aem line scan radius
+    # aem line scan radius in meters - aem points are assumed to be on the same flight line under this radius
     aem_line_scan_radius: 500
+    # aem lines are split into batches of aem_line_splits's to generate artificial splits
+    aem_line_splits: 1000
     test_train_split:
         train: 0.6
         val: 0.2

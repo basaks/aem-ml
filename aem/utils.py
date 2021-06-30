@@ -150,8 +150,14 @@ def create_interp_data(conf: Config, input_interp_data, included_lines):
     return line_required
 
 
-def add_delta(line, origin=None):
-    line = line.sort_values(by='POINT_Y', ascending=False)
+def add_delta(line: pd.DataFrame, conf: Config, origin=None):
+    """
+    :param line:
+    :param origin: origin of flight line, if not provided assumed ot be the at the lowest y value
+    :return:
+    """
+    line = line.sort_values(by='POINT_Y', ascending=True)
+    line_cols = list(line.columns)
     line['POINT_X_diff'] = line['POINT_X'].diff()
     line['POINT_Y_diff'] = line['POINT_Y'].diff()
     line['delta'] = np.sqrt(line.POINT_X_diff ** 2 + line.POINT_Y_diff ** 2)
@@ -161,68 +167,74 @@ def add_delta(line, origin=None):
             (line.POINT_X.iat[0] - origin[0]) ** 2 +
             (line.POINT_Y.iat[0] - origin[1]) ** 2
         )
-
     line['d'] = line['delta'].cumsum()
-    line = line.sort_values(by=['d'], ascending=True)
-    return line
+    line = line.sort_values(by=['d'], ascending=True)  # must sort by distance from origin of flight line
+    cluster_id = str(np.unique(line.cluster_line_no)[0]) + '_'
+    arrs = np.array_split(range(line.shape[0]), line.shape[0]//conf.aem_line_splits)
+    for i, a in enumerate(arrs):
+        arrs[i] = np.ones_like(a) * i
+    arr = np.concatenate(arrs).ravel().astype(str)
+    line['cluster_line_segment_id'] = pd.Series([cluster_id + b for b in arr], index=line.index)
+
+    return line[line_cols + ['d', 'cluster_line_segment_id']]
 
 
-def plot_2d_section(X_val_line: pd.DataFrame,
-                    X_val_line_coords: pd.DataFrame,
-                    val_interp_line: pd.DataFrame, model, col_names: List[str],
-                    conductivities: List[str], thickness: List[str], slope=False,
-                    flip_column=False, v_min=0.3, v_max=0.8):
-    if isinstance(col_names, str):
-        col_names = [col_names]
-
-    from scipy.signal import savgol_filter
-    import matplotlib.pyplot as plt
-    from matplotlib.colors import LogNorm, Normalize, SymLogNorm, PowerNorm
-    from matplotlib.colors import Colormap
-    original_cols = X_val_line.columns[:]
-    line = add_delta(X_val_line_coords)
-    X_val_line = pd.concat([X_val_line, line], axis=1)
-    origin = (X_val_line.POINT_X.iat[0], X_val_line.POINT_Y.iat[0])
-    val_interp_line = add_delta(val_interp_line, origin=origin)
-    if slope:
-        d_conduct_cols = ['d_' + c for c in conductivities]
-        Z = X_val_line[d_conduct_cols]
-        Z = Z - np.min(np.min((Z))) + 1.0e-10
-    else:
-        Z = X_val_line[conductivities]
-
-    h = X_val_line[thickness]
-    dd = X_val_line.d
-    ddd = np.atleast_2d(dd).T
-    d = np.repeat(ddd, h.shape[1], axis=1)
-    fig, ax = plt.subplots(figsize=(40, 4))
-    cmap = plt.get_cmap('viridis')
-
-    if slope:
-        norm = LogNorm(vmin=v_min, vmax=v_max)
-    else:
-        norm = Normalize(vmin=v_min, vmax=v_max)
-
-    im = ax.pcolormesh(d, -h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True)
-    fig.colorbar(im, ax=ax)
-    axs = ax.twinx()
-    y_pred = -model.predict(X_val_line[original_cols])
-    pred = savgol_filter(y_pred, 11, 3)  # window size 51, polynomial order 3
-    ax.plot(X_val_line.d, pred, label='prediction', linewidth=2, color='r')
-    ax.plot(val_interp_line.weight_dict, -val_interp_line.Z_coor, label='interpretation', linewidth=2, color='k')
-    # for c in col_names:
-    #     axs.plot(X_val_line.d, -X_val_line[c] if flip_column else X_val_line[c], label=c, linewidth=2, color='orange')
-
-    ax.set_xlabel('distance along aem line (m)')
-    ax.set_ylabel('depth (m)')
-    if slope:
-        plt.title("d(Conductivity) vs depth")
-    else:
-        plt.title("Conductivity vs depth")
-
-    ax.legend()
-    axs.legend()
-    plt.show()
+# def plot_2d_section(X_val_line: pd.DataFrame,
+#                     X_val_line_coords: pd.DataFrame,
+#                     val_interp_line: pd.DataFrame, model, col_names: List[str],
+#                     conductivities: List[str], thickness: List[str], slope=False,
+#                     flip_column=False, v_min=0.3, v_max=0.8):
+#     if isinstance(col_names, str):
+#         col_names = [col_names]
+#
+#     from scipy.signal import savgol_filter
+#     import matplotlib.pyplot as plt
+#     from matplotlib.colors import LogNorm, Normalize, SymLogNorm, PowerNorm
+#     from matplotlib.colors import Colormap
+#     original_cols = X_val_line.columns[:]
+#     line = add_delta(X_val_line_coords)
+#     X_val_line = pd.concat([X_val_line, line], axis=1)
+#     origin = (X_val_line.POINT_X.iat[0], X_val_line.POINT_Y.iat[0])
+#     val_interp_line = add_delta(val_interp_line, origin=origin)
+#     if slope:
+#         d_conduct_cols = ['d_' + c for c in conductivities]
+#         Z = X_val_line[d_conduct_cols]
+#         Z = Z - np.min(np.min((Z))) + 1.0e-10
+#     else:
+#         Z = X_val_line[conductivities]
+#
+#     h = X_val_line[thickness]
+#     dd = X_val_line.d
+#     ddd = np.atleast_2d(dd).T
+#     d = np.repeat(ddd, h.shape[1], axis=1)
+#     fig, ax = plt.subplots(figsize=(40, 4))
+#     cmap = plt.get_cmap('viridis')
+#
+#     if slope:
+#         norm = LogNorm(vmin=v_min, vmax=v_max)
+#     else:
+#         norm = Normalize(vmin=v_min, vmax=v_max)
+#
+#     im = ax.pcolormesh(d, -h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True)
+#     fig.colorbar(im, ax=ax)
+#     axs = ax.twinx()
+#     y_pred = -model.predict(X_val_line[original_cols])
+#     pred = savgol_filter(y_pred, 11, 3)  # window size 51, polynomial order 3
+#     ax.plot(X_val_line.d, pred, label='prediction', linewidth=2, color='r')
+#     ax.plot(val_interp_line.weight_dict, -val_interp_line.Z_coor, label='interpretation', linewidth=2, color='k')
+#     # for c in col_names:
+#     #     axs.plot(X_val_line.d, -X_val_line[c] if flip_column else X_val_line[c], label=c, linewidth=2, color='orange')
+#
+#     ax.set_xlabel('distance along aem line (m)')
+#     ax.set_ylabel('depth (m)')
+#     if slope:
+#         plt.title("d(Conductivity) vs depth")
+#     else:
+#         plt.title("Conductivity vs depth")
+#
+#     ax.legend()
+#     axs.legend()
+#     plt.show()
 
 
 def export_model(model, conf: Config, learn=True):
