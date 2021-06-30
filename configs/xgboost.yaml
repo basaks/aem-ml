@@ -21,11 +21,13 @@ data:
         - 'SagaWET9ce'
         - 'elevation'
         - 'tx_height'
+    # aem line scan radius
+    aem_line_scan_radius: 500
     test_train_split:
         train: 0.6
         val: 0.2
         test: 0.2
-    rows: 15000
+    rows: -1
 
 # will run n_iter * cv number of jobs
 # n_iter: Number of parameter settings that are sampled.

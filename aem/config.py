@@ -38,6 +38,7 @@ class Config:
         self.aem_train_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['train_data']['aem_train_data']]
         self.aem_pred_data = Path(self.aem_folder).joinpath(s['data']['apply_model'])
         self.shapefile_rows = s['data']['rows']
+        self.aem_line_dbscan_eps = s['data']['aem_line_scan_radius']
 
         # np randomisation
         self.numpy_seed = s['learning']['numpy_seed']
@@ -95,6 +96,7 @@ class Config:
         self.optimisation_data = Path(self.output_dir).joinpath(self.name + "_optimisation.csv")
         self.pred_data = Path(self.output_dir).joinpath(self.name + "_pred.csv")
         self.quantiles = s['output']['pred']['quantiles']
+        self.aem_lines_plot = Path(self.output_dir).joinpath('aem_survey_lines.jpg')
 
         # test train val split
         self.train_fraction = s['data']['test_train_split']['train']
