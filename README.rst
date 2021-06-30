@@ -28,7 +28,27 @@ Features
 
 * TODO
 
+
+Quick Python Environement
+------------------
+
+Install `virtualenv` and `virtualenvwrapper` `for your python version. <https://gist.github.com/basaks/b33ea9106c7d1d72ac3a79fdcea430eb>`_
+The do the following steps:
+
+.. code-block:: python
+
+   mkdir -p python3.7 aemml
+   pip install -r requirements.txt -r requirements_dev.txt
+
+Once everything in installed, run the tests:
+
+.. code-block:: python
+
+   pytest tests/
+
+
 Credits
 -------
 John Wilford
+Sudipta Basak
 

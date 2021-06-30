@@ -1,8 +1,12 @@
 data:
     aem_folder: '/home/sudipta/Documents/new_datasets'
     train_data:
-        aem_train_data: 'high_res_cond_clip_albers_skip_6.shp'
-        targets: 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
+        aem_train_data:
+            - 'high_res_cond_clip_albers_skip_6.shp'
+        targets:
+            - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
+        weights:
+            - 1
     apply_model: 'high_res_cond_clip_albers_skip_6.shp'
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
@@ -21,7 +25,7 @@ data:
         train: 0.6
         val: 0.2
         test: 0.2
-    rows: 30000
+    rows: 15000
 
 # will run n_iter * cv number of jobs
 # n_iter: Number of parameter settings that are sampled.

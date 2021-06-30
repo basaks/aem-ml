@@ -3,39 +3,46 @@ from pathlib import Path
 import geopandas as gpd
 import joblib
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
+from aem.config import Config
 from aem import utils
 from aem.logger import aemlogger as log
 from aem.utils import create_interp_data, create_train_test_set
 
 
-def load_data(conf):
+def load_data(conf: Config):
     log.info("Reading covariates...")
     log.info("reading interp data...")
-    all_interp_data = gpd.GeoDataFrame.from_file(conf.interp_data, rows=conf.shapefile_rows)
+    all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in conf.interp_data]
+    train_weights = conf.train_data_weights
 
+    # apply the weights due to confidence levels assigned by the interpreter on the interpretation/target values
+    # plus the weights due to the datasets themselves
     if conf.weighted_model:
-        all_interp_data['weight'] = all_interp_data[conf.weight_col].map(conf.weight_dict)
+        for a, w in zip(all_interp_training_datasets, train_weights):
+            a['weight'] = a[conf.weight_col].map(conf.weight_dict) * w
 
     # TODO: generate multiple segments from same survey line (2)
     # todo: add weights to target shapefile (3)
     # TODO: different search radius for different targets (3)
     # TODO: geology/polygon impact (4)
-    # TODO: smooth covariates before training with toggle (1)
     # TODO: Scaling of covariates and targets (5)
 
     log.info("reading covariates ...")
-    original_aem_data = gpd.GeoDataFrame.from_file(conf.aem_train_data, rows=conf.shapefile_rows)
+    original_aem_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in conf.aem_train_data]
+    all_interp_training_data = pd.concat(all_interp_training_datasets, axis=0)
+    original_aem_data = pd.concat(original_aem_datasets, axis=0)
 
     # how many lines in interp data
-    lines_in_data = np.unique(all_interp_data[conf.line_col])
+    lines_in_data = np.unique(all_interp_training_data[conf.line_col])
 
     train_and_val_lines_in_data, test_lines_in_data = train_test_split(lines_in_data, test_size=conf.test_fraction)
     train_lines_in_data, val_lines_in_data = train_test_split(train_and_val_lines_in_data,
                                                               test_size=conf.val_fraction/(1-conf.test_fraction))
 
-    all_lines = utils.create_interp_data(conf, all_interp_data, included_lines=list(lines_in_data))
+    all_lines = utils.create_interp_data(conf, all_interp_training_data, included_lines=list(lines_in_data))
 
     # import IPython; IPython.embed(); import sys; sys.exit()
     aem_xy_and_other_covs = utils.prepare_aem_data(conf, original_aem_data)[utils.select_required_data_cols(conf)]
@@ -49,9 +56,9 @@ def load_data(conf):
         log.warning("Reusing data from disc!!!")
         data = joblib.load(open(data_path, 'rb'))
 
-    train_data_lines = [create_interp_data(conf, all_interp_data, included_lines=i) for i in train_lines_in_data]
-    val_data_lines = [create_interp_data(conf, all_interp_data, included_lines=i) for i in val_lines_in_data]
-    test_data_lines = [create_interp_data(conf, all_interp_data, included_lines=i) for i in test_lines_in_data]
+    train_data_lines = [create_interp_data(conf, all_interp_training_data, included_lines=i) for i in train_lines_in_data]
+    val_data_lines = [create_interp_data(conf, all_interp_training_data, included_lines=i) for i in val_lines_in_data]
+    test_data_lines = [create_interp_data(conf, all_interp_training_data, included_lines=i) for i in test_lines_in_data]
 
     all_data_lines = train_data_lines + val_data_lines + test_data_lines
 

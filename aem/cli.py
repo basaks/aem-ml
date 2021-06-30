@@ -27,7 +27,7 @@ def main(verbosity: str) -> int:
 
 
 @main.command()
-@click.option("--config", type=click.Path(exists=True), required=True,
+@click.option("-c", "--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
 def learn(config: str) -> None:
     """Train a model specified by a config file."""
@@ -74,7 +74,7 @@ def learn(config: str) -> None:
 
 
 @main.command()
-@click.option("--config", type=click.Path(exists=True), required=True,
+@click.option("-c", "--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
 def optimise(config: str) -> None:
     """Optimise model parameters using Bayesian regression."""

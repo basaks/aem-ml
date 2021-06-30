@@ -33,8 +33,9 @@ class Config:
 
         # data
         self.aem_folder = s['data']['aem_folder']
-        self.interp_data = Path(self.aem_folder).joinpath(s['data']['train_data']['targets'])
-        self.aem_train_data = Path(self.aem_folder).joinpath(s['data']['train_data']['aem_train_data'])
+        self.interp_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['train_data']['targets']]
+        self.train_data_weights = s['data']['train_data']['weights']
+        self.aem_train_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['train_data']['aem_train_data']]
         self.aem_pred_data = Path(self.aem_folder).joinpath(s['data']['apply_model'])
         self.shapefile_rows = s['data']['rows']
 
@@ -69,7 +70,7 @@ class Config:
         self.thickness_columns_prefix = s['data']['thickness_columns_prefix']
         self.aem_covariate_cols = s['data']['aem_covariate_cols']
 
-        original_aem_data = gpd.GeoDataFrame.from_file(self.aem_train_data.as_posix(), rows=1)
+        original_aem_data = gpd.GeoDataFrame.from_file(self.aem_train_data[0].as_posix(), rows=1)
 
         conductivity_cols = [c for c in original_aem_data.columns if c.startswith(self.conductivity_columns_prefix)]
         d_conductivities = ['d_' + c for c in conductivity_cols]
