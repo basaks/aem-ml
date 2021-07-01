@@ -1,5 +1,5 @@
 data:
-    aem_folder: '/home/sudipta/Documents/new_datasets'
+    aem_folder: 'aem_data'
     train_data:
         aem_train_data:
             - 'high_res_cond_clip_albers_skip_6.shp'
@@ -46,9 +46,17 @@ learning:
     algorithm: xgboost
     params:
         objective: 'reg:squarederror'
-        max_depth: 10
-        learning_rate: 0.1
-        n_estimators: 10
+        max_depth: 15
+        learning_rate: 0.23
+        n_estimators: 20
+        colsample_bynode: 0.8
+        colsample_bylevel: 1.0
+        colsample_bytree: 0.9
+        max_delta_step: 9
+        gamma: 0.5
+        reg_alpha: 57.96
+        reg_lambda: 10.0
+        subsample: 1.0
     weighted_model:
         weights:
             H: 2

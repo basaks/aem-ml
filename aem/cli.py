@@ -13,6 +13,7 @@ from aem.models import modelmaps
 from aem import training
 from aem.logger import configure_logging, aemlogger as log
 from aem.utils import import_model
+from sklearn.model_selection import cross_validate, GroupKFold
 
 
 @click.group()
@@ -35,12 +36,16 @@ def learn(config: str) -> None:
     conf = Config(config)
     np.random.seed(conf.numpy_seed)
 
-    X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
-        w_train_val = load_data(conf)
+    X, y, w = load_data(conf)
     model = modelmaps[conf.algorithm](**conf.model_params)
     model_cols = utils.select_columns_for_model(conf)
+    scores = cross_validate(model, X[model_cols], y, groups=X['cluster_line_no'],
+                            fit_params={'sample_weight': w}, n_jobs=-1, verbose=1000, cv=GroupKFold(5))
+
+    import IPython; IPython.embed()
+    import sys; sys.exit()
+
     log.info(f"Training {conf.algorithm} model")
-    model.fit(X_train_val[model_cols], y_train_val, sample_weight=w_train_val)
 
     log.info(f"Finished training {conf.algorithm} model")
 
@@ -67,7 +72,6 @@ def learn(config: str) -> None:
     add_pred_to_data(X, conf, model)
     X['target'] = y
     X['weights'] = w
-    # TODO: insert line number of interpretation
     X.to_csv(conf.train_data, index=False)
 
     log.info(f"Saved training data and target and prediction at {conf.train_data}")

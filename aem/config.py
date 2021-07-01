@@ -8,6 +8,7 @@ confidence_indicator_col = 'BoundConf'
 
 twod_coords = ['POINT_X', 'POINT_Y']
 threed_coords = twod_coords + ['Z_coor']
+additional_cols_for_tracking = ['uniqueid', 'flight', 'line', 'cluster_line_no', 'd', 'cluster_line_segment_id']
 
 
 class Config:

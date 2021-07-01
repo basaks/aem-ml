@@ -6,7 +6,7 @@ import numpy as np
 from scipy.signal import medfilt2d
 import pandas as pd
 from sklearn.neighbors import KDTree
-from aem.config import twod_coords, threed_coords, Config
+from aem.config import twod_coords, threed_coords, Config, additional_cols_for_tracking
 from aem.logger import aemlogger as log
 
 
@@ -46,7 +46,7 @@ def apply_twod_median_filter(conf: Config, aem_conductivities: pd.DataFrame):
 
 def select_required_data_cols(conf: Config):
     cols = select_columns_for_model(conf)[:]
-    return cols + twod_coords
+    return cols + twod_coords + additional_cols_for_tracking
 
 
 def select_columns_for_model(conf: Config):
@@ -69,13 +69,13 @@ def create_train_test_set(conf: Config, data, *included_interp_data):
         w = data['weights']
     else:
         w = np.ones_like(y)
-    included_lines = np.zeros(X.shape[0], dtype=bool)  # nothing is included
+    # included_lines = np.zeros(X.shape[0], dtype=bool)  # nothing is included
 
-    for in_data in included_interp_data:
-        x_max, x_min, y_max, y_min = extent_of_data(in_data)
-        included_lines = included_lines | \
-                         ((X.POINT_X < x_max + dis_tol) & (X.POINT_X > x_min - dis_tol) &
-                          (X.POINT_Y < y_max + dis_tol) & (X.POINT_Y > y_min - dis_tol))
+    # for in_data in included_interp_data:
+    #     x_max, x_min, y_max, y_min = extent_of_data(in_data)
+    #     included_lines = included_lines | \
+    #                      ((X.POINT_X < x_max + dis_tol) & (X.POINT_X > x_min - dis_tol) &
+    #                       (X.POINT_Y < y_max + dis_tol) & (X.POINT_Y > y_min - dis_tol))
 
     cols = select_required_data_cols(conf)
 
@@ -141,7 +141,6 @@ def create_interp_data(conf: Config, input_interp_data, included_lines):
     line = input_interp_data[(input_interp_data['Type'] != 'WITHIN_Cenozoic')
                              & (input_interp_data['Type'] != 'BASE_Mesozoic_TOP_Paleozoic')
                              & (input_interp_data[conf.line_col].isin(included_lines))]
-    # line = add_delta(line)
     line = line.rename(columns={'DEPTH': 'Z_coor'})
     if weighted_model:
         line_required = line[threed_coords + ['weight']]
