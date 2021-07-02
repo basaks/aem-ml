@@ -39,8 +39,12 @@ def learn(config: str) -> None:
     X, y, w = load_data(conf)
     model = modelmaps[conf.algorithm](**conf.model_params)
     model_cols = utils.select_columns_for_model(conf)
+    import IPython; IPython.embed()
+    import sys; sys.exit()
+
     scores = cross_validate(model, X[model_cols], y, groups=X['cluster_line_no'],
-                            fit_params={'sample_weight': w}, n_jobs=-1, verbose=1000, cv=GroupKFold(5))
+                            fit_params={'sample_weight': w}, n_jobs=2, verbose=1000, cv=GroupKFold(5))
+
 
     import IPython; IPython.embed()
     import sys; sys.exit()

@@ -15,7 +15,7 @@ radius = 500
 dis_tol = 100  # meters, distance tolerance used
 
 
-def prepare_aem_data(conf: Config, aem_data):
+def prepare_aem_data(conf: Config, aem_data: pd.DataFrame):
     """
     :param conf:
     :param in_scope_aem_data:
@@ -26,7 +26,10 @@ def prepare_aem_data(conf: Config, aem_data):
     """
     aem_data = aem_data.sort_values(by=['POINT_Y'], ascending=False)
     if conf.smooth_twod_covariates:
-        aem_data[conf.conductivity_cols] = apply_twod_median_filter(conf, aem_data[conf.conductivity_cols])
+        for line in np.unique(aem_data.cluster_line_no):
+            row_loc = aem_data.index[aem_data.cluster_line_no == line]
+            aem_line_data = aem_data[aem_data.cluster_line_no == line][conf.conductivity_cols]
+            aem_data.loc[row_loc, conf.conductivity_cols] = apply_twod_median_filter(conf, aem_line_data)
 
     aem_data[conf.thickness_cols] = aem_data[conf.thickness_cols].cumsum(axis=1)
     conductivity_diff = aem_data[conf.conductivity_cols].diff(axis=1, periods=-1)
@@ -236,6 +239,48 @@ def add_delta(line: pd.DataFrame, conf: Config, origin=None):
 #     plt.show()
 
 
+def plot_conductivity(X: pd.DataFrame,
+                      conf: Config,
+                      cluster_line_no,
+                      slope=False, flip_column=False, v_min=0.3, v_max=0.8):
+
+    from scipy.signal import savgol_filter
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LogNorm, Normalize, SymLogNorm, PowerNorm
+    from matplotlib.colors import Colormap
+    X = X[X.cluster_line_no == cluster_line_no]
+    if slope:
+        Z = X[conf.conductivity_derivatives_cols]
+        Z = Z - np.min(np.min((Z))) + 1.0e-10
+    else:
+        Z = X[conf.conductivity_cols]
+
+    h = X[conf.thickness_cols]
+    dd = X.d
+    ddd = np.atleast_2d(dd).T
+    d = np.repeat(ddd, h.shape[1], axis=1)
+    fig, ax = plt.subplots(figsize=(40, 4))
+    cmap = plt.get_cmap('viridis')
+
+    if slope:
+        norm = LogNorm(vmin=v_min, vmax=v_max)
+    else:
+        norm = LogNorm(vmin=v_min, vmax=v_max)
+
+    im = ax.pcolormesh(d, -h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True)
+    fig.colorbar(im, ax=ax)
+
+    ax.set_xlabel('distance along aem line (m)')
+    ax.set_ylabel('depth (m)')
+    if slope:
+        plt.title("d(Conductivity) vs depth")
+    else:
+        plt.title("Conductivity vs depth")
+
+    ax.legend()
+    plt.show()
+
+
 def export_model(model, conf: Config, learn=True):
     state_dict = {"model": model, "config": conf}
     model_file = conf.optimised_model_file if (conf.optimised_model and not learn) else conf.model_file
@@ -249,3 +294,7 @@ def import_model(conf, learn=True):
     with open(model_file, 'rb') as f:
         state_dict = joblib.load(f)
     return state_dict
+
+
+def plot_cond_mesh(X, conf):
+    return
