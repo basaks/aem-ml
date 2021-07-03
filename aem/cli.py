@@ -8,7 +8,7 @@ from sklearn.model_selection import cross_validate, GroupKFold, train_test_split
 from aem import __version__
 from aem.config import Config, cluster_line_segment_id, cluster_line_no
 from aem import utils
-from aem.data import load_data
+from aem.data import load_data, load_covariates
 from aem.prediction import add_pred_to_data
 from aem.models import modelmaps
 from aem import training
@@ -102,23 +102,21 @@ def optimise(config: str) -> None:
 @main.command()
 @click.option("-c", "--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
-@click.option('--model-type',
+@click.option('--model-type', required=True,
               type=click.Choice(['learn', 'optimised'], case_sensitive=False))
 def predict(config: str, model_type: str) -> None:
     """Predict using a model saved on disc."""
     conf = Config(config)
-    log.info(f"Predicting using trained model file found in location {conf.model_file}")
-    log.info(f"Prediction covariates are read from {conf.aem_pred_data}")
-
-    pred_aem_data = gpd.GeoDataFrame.from_file(conf.aem_pred_data, rows=conf.shapefile_rows)
-
-    model_cols = utils.select_columns_for_model(conf)
-    X = utils.prepare_aem_data(conf, pred_aem_data)[model_cols]
-    learn = model_type == 'learn'
-    state_dict = import_model(conf, learn=learn)
-    log.info(f"loaded trained model from location {conf.model_file}")
+    optimised_model = model_type == 'learn'
+    state_dict = import_model(conf, learn=optimised_model)
     model = state_dict["model"]
-    config = state_dict["config"]
+
+    model_file = conf.optimised_model_file if (conf.optimised_model and not learn) else conf.model_file
+    log.info(f"Predicting using trained model file found in location {model_file}")
+
+    pred_aem_data = load_covariates(is_train=False, conf=conf)
+
+    X = utils.prepare_aem_data(conf, pred_aem_data)[utils.select_required_data_cols(conf)]
 
     add_pred_to_data(X, conf, model)
     log.info(f"Finished predicting {conf.algorithm} model")
