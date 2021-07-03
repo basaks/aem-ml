@@ -68,6 +68,8 @@ learning:
             max_depth: 10
             learning_rate: 0.1
             n_estimators: 10
+    cross_validation:
+        kfold: 3
     weighted_model:
         weights:
             H: 2

@@ -84,7 +84,9 @@ class QuantileXGB(BaseEstimator, RegressorMixin):
         upper_quantile_params,
         lower_quantile_params
     ):
-        print(mean_model_params)
+        self.mean_model_params = mean_model_params
+        self.upper_quantile_params = upper_quantile_params
+        self.lower_quantile_params = lower_quantile_params
         self.gb = XGBRegressor(**mean_model_params)
         self.gb_quantile_upper = XGBQuantileRegressor(**upper_quantile_params)
         self.gb_quantile_lower = XGBQuantileRegressor(**lower_quantile_params)
@@ -128,6 +130,9 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin):
         upper_quantile_params,
         lower_quantile_params
     ):
+        self.mean_model_params = mean_model_params
+        self.upper_quantile_params = upper_quantile_params
+        self.lower_quantile_params = lower_quantile_params
         self.gb = GradientBoostingRegressor(**mean_model_params)
         self.gb_quantile_upper = GradientBoostingRegressor(**upper_quantile_params)
         self.gb_quantile_lower = GradientBoostingRegressor(**lower_quantile_params)

@@ -80,17 +80,17 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
 
 
 def train_test_score(X: pd.DataFrame, y: pd.Series, w: pd.Series, conf: Config, model_params: Dict):
-    opt_model = modelmaps[conf.algorithm](** model_params)
+    model = modelmaps[conf.algorithm](** model_params)
 
     model_cols = utils.select_columns_for_model(conf)
     # split data into two non-overlapping parts
     X_test, X_train, w_test, w_train, y_test, y_train = create_train_test_set_based_on_column(
         X, y, w, cluster_line_segment_id
     )
-    opt_model.fit(X_train[model_cols], y_train, sample_weight=w_train)
+    model.fit(X_train[model_cols], y_train, sample_weight=w_train)
 
-    train_scores = score_model(opt_model, X_train[model_cols], y_train, w_train)
-    test_scores = score_model(opt_model, X_test[model_cols], y_test, w_test)
+    train_scores = score_model(model, X_train[model_cols], y_train, w_train)
+    test_scores = score_model(model, X_test[model_cols], y_test, w_test)
     all_scores = {'train_score': train_scores, 'test_score': test_scores}
     return all_scores
 

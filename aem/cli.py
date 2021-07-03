@@ -47,7 +47,7 @@ def learn(config: str) -> None:
                                 cv=GroupKFold(conf.cross_validation_folds),
                                 return_train_score=True)
     else:
-        log.info(f"Running {conf.algorithm} model with train and test sets")
+        log.info(f"Running {conf.algorithm} model validation with train and test sets")
         scores = training.train_test_score(X, y, w, conf, conf.model_params)
 
     log.info(f"Finished {conf.algorithm} cross validation")
@@ -88,7 +88,6 @@ def optimise(config: str) -> None:
     conf = Config(config)
     X, y, w = load_data(conf)
 
-    model_cols = utils.select_columns_for_model(conf)
     groups = X[cluster_line_segment_id]
     model = training.bayesian_optimisation(X, y, w, groups, conf)
 
