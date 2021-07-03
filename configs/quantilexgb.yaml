@@ -1,5 +1,5 @@
 data:
-    aem_folder: '/home/sudipta/Documents/new_datasets'
+    aem_folder: 'aem_data'
     train_data:
         aem_train_data:
             - 'high_res_cond_clip_albers_skip_6.shp'
@@ -12,6 +12,10 @@ data:
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
     thickness_columns_prefix: 'thick'
+    # aem line scan radius in meters - aem points are assumed to be on the same flight line under this radius
+    aem_line_scan_radius: 500
+    # aem lines are split into batches of aem_line_splits's to generate artificial splits
+    aem_line_splits: 1000
     aem_covariate_cols:
         - 'ceno_euc_a'
         - 'Gravity_la'
@@ -64,6 +68,8 @@ learning:
             max_depth: 10
             learning_rate: 0.1
             n_estimators: 10
+    cross_validation:
+        kfold: 5
     weighted_model:
         weights:
             H: 2
@@ -74,7 +80,7 @@ learning:
     include_thickness: true
     include_conductivity_derivatives: true
     smooth_twod_covariates: true
-    smooth_covariates_kernel_size: 5
+    smooth_covariates_kernel_size: (21, 3)
     optimisation:
         searchcv_params:
             n_iter: 6

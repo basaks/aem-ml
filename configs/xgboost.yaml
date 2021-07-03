@@ -57,6 +57,8 @@ learning:
         reg_alpha: 57.96
         reg_lambda: 10.0
         subsample: 1.0
+    cross_validation:
+        kfold: 5
     weighted_model:
         weights:
             H: 2
@@ -67,7 +69,9 @@ learning:
     include_thickness: true
     include_conductivity_derivatives: true
     smooth_twod_covariates: true
-    smooth_covariates_kernel_size: (5, 9)
+    smooth_covariates_kernel_size: (21, 9)
+    # depth - columns (x) -- 30 sections
+    # along the line is - rows (y) -- many 100s of kms with resolutionof 12meters
     optimisation:
         searchcv_params:
             n_iter: 6
@@ -79,7 +83,7 @@ learning:
             'max_depth': Integer(1, 15)
             'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
             'n_estimators': Integer(2, 20)
-            'min_child_weight': Integer(1, 10)
+            'min_child_weight': Integer(1select_columns_for_model, 10)
             'max_delta_step': Integer(0, 10)
             'gamma': Real(0, 0.5, prior="uniform")
             'colsample_bytree': Real(0.3, 0.9, prior="uniform")
