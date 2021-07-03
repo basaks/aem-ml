@@ -29,7 +29,7 @@ data:
         train: 0.6
         val: 0.2
         test: 0.2
-    rows: 15000
+    rows: -1
 
 # will run n_iter * cv number of jobs
 # n_iter: Number of parameter settings that are sampled.
@@ -68,8 +68,6 @@ learning:
             max_depth: 10
             learning_rate: 0.1
             n_estimators: 10
-    cross_validation:
-        kfold: 2
     weighted_model:
         weights:
             H: 2

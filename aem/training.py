@@ -54,7 +54,7 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
         log.info(f"Saved bayesian search optimised params in {conf.optimised_model_params}")
 
     log.info("Score optimised model using train test split")
-    all_scores = train_test_score(X, y, w, conf, ** searchcv.best_params_)
+    all_scores = train_test_score(X, y, w, conf, searchcv.best_params_)
 
     score_string = "Optimised model scores:\n"
     # report model performance on screen
@@ -76,8 +76,8 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
     return opt_model
 
 
-def train_test_score(X, y, w, conf: Config, model_params: Dict):
-    opt_model = modelmaps[conf.algorithm](model_params)
+def train_test_score(X: pd.DataFrame, y: pd.Series, w: pd.Series, conf: Config, model_params: Dict):
+    opt_model = modelmaps[conf.algorithm](** model_params)
 
     model_cols = utils.select_columns_for_model(conf)
     # split data into two non-overlapping parts
@@ -88,7 +88,7 @@ def train_test_score(X, y, w, conf: Config, model_params: Dict):
 
     train_scores = score_model(opt_model, X_train[model_cols], y_train, w_train)
     test_scores = score_model(opt_model, X_test[model_cols], y_test, w_test)
-    all_scores = {'train_scores': train_scores, 'test_scores': test_scores}
+    all_scores = {'train_score': train_scores, 'test_score': test_scores}
     return all_scores
 
 

@@ -50,7 +50,11 @@ class Config:
         # training
         self.algorithm = s['learning']['algorithm']
         self.model_params = s['learning']['params']
-        self.cross_validation_folds = s['learning']['cross_validation']['kfold']
+        if 'cross_validation' in s['learning']:
+            self.cross_validation_folds = s['learning']['cross_validation']['kfold']
+            self.cross_validate = True
+        else:
+            self.cross_validate = False
         self.include_aem_covariates = s['learning']['include_aem_covariates']
         self.include_thickness = s['learning']['include_thickness']
         self.include_conductivity_derivatives = s['learning']['include_conductivity_derivatives']

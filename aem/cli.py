@@ -4,6 +4,7 @@ import click
 import json
 import numpy as np
 import geopandas as gpd
+from sklearn.model_selection import cross_validate, GroupKFold, train_test_split
 from aem import __version__
 from aem.config import Config, cluster_line_segment_id, cluster_line_no
 from aem import utils
@@ -13,7 +14,6 @@ from aem.models import modelmaps
 from aem import training
 from aem.logger import configure_logging, aemlogger as log
 from aem.utils import import_model
-from sklearn.model_selection import cross_validate, GroupKFold, train_test_split
 
 
 @click.group()
@@ -40,11 +40,15 @@ def learn(config: str) -> None:
     model = modelmaps[conf.algorithm](**conf.model_params)
     model_cols = utils.select_columns_for_model(conf)
 
-    log.info(f"Running cross validation of {conf.algorithm} model with kfold {conf.cross_validation_folds}")
-    scores = cross_validate(model, X[model_cols], y, groups=X['cluster_line_segment_id'],
-                            fit_params={'sample_weight': w}, n_jobs=-1, verbose=1000,
-                            cv=GroupKFold(conf.cross_validation_folds),
-                            return_train_score=True)
+    if conf.cross_validate:
+        log.info(f"Running cross validation of {conf.algorithm} model with kfold {conf.cross_validation_folds}")
+        scores = cross_validate(model, X[model_cols], y, groups=X['cluster_line_segment_id'],
+                                fit_params={'sample_weight': w}, n_jobs=-1, verbose=1000,
+                                cv=GroupKFold(conf.cross_validation_folds),
+                                return_train_score=True)
+    else:
+        log.info(f"Running {conf.algorithm} model with train and test sets")
+        scores = training.train_test_score(X, y, w, conf, conf.model_params)
 
     log.info(f"Finished {conf.algorithm} cross validation")
 
