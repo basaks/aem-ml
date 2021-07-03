@@ -105,7 +105,9 @@ class Config:
         self.optimisation_data = Path(self.output_dir).joinpath(self.name + "_optimisation.csv")
         self.pred_data = Path(self.output_dir).joinpath(self.name + "_pred.csv")
         self.quantiles = s['output']['pred']['quantiles']
-        self.aem_lines_plot = Path(self.output_dir).joinpath('aem_survey_lines.jpg')
+        self.aem_lines_plot_train = Path(self.output_dir).joinpath('aem_survey_lines_train.jpg')
+        self.aem_lines_plot_pred = Path(self.output_dir).joinpath('aem_survey_lines_pred.jpg')
+        self.train_scatter_plot = Path(self.output_dir).joinpath('train_scatter.jpg')
 
         # test train val split
         self.train_fraction = s['data']['test_train_split']['train']
