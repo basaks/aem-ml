@@ -45,9 +45,12 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
         refit=False
     )
     log.info(f"Optimising params using BayesSearchCV .....")
-    searchcv.fit(X, y, groups=groups)
+    model_cols = utils.select_columns_for_model(conf)
+
+    searchcv.fit(X[model_cols], y, groups=groups)
 
     log.info(f"Finished param optimisation using BayesSearchCV .....")
+    log.info(f"Best score found using param optimisation {searchcv.best_score_}")
 
     with open(conf.optimised_model_params, 'w') as f:
         json.dump(searchcv.best_params_, f, sort_keys=True, indent=4)
@@ -71,7 +74,7 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
 
     log.info("Now training final model using the optimised model params")
     opt_model = modelmaps[conf.algorithm](** searchcv.best_params_)
-    opt_model.fit(X, y, sample_weight=w)
+    opt_model.fit(X[model_cols], y, sample_weight=w)
 
     return opt_model
 
@@ -84,7 +87,7 @@ def train_test_score(X: pd.DataFrame, y: pd.Series, w: pd.Series, conf: Config, 
     X_test, X_train, w_test, w_train, y_test, y_train = create_train_test_set_based_on_column(
         X, y, w, cluster_line_segment_id
     )
-    opt_model.fit(X_train, y_train, sample_weight=w_train)
+    opt_model.fit(X_train[model_cols], y_train, sample_weight=w_train)
 
     train_scores = score_model(opt_model, X_train[model_cols], y_train, w_train)
     test_scores = score_model(opt_model, X_test[model_cols], y_test, w_test)

@@ -90,7 +90,7 @@ def optimise(config: str) -> None:
 
     model_cols = utils.select_columns_for_model(conf)
     groups = X[cluster_line_segment_id]
-    model = training.bayesian_optimisation(X[model_cols], y, w, groups, conf)
+    model = training.bayesian_optimisation(X, y, w, groups, conf)
 
     add_pred_to_data(X, conf, model)
     X['target'] = y

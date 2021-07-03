@@ -83,7 +83,7 @@ learning:
             'max_depth': Integer(1, 15)
             'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
             'n_estimators': Integer(2, 20)
-            'min_child_weight': Integer(1select_columns_for_model, 10)
+            'min_child_weight': Integer(1, 10)
             'max_delta_step': Integer(0, 10)
             'gamma': Real(0, 0.5, prior="uniform")
             'colsample_bytree': Real(0.3, 0.9, prior="uniform")
