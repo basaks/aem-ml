@@ -1,4 +1,3 @@
-import pytest
 from tests.common import sub_process_run
 
 
