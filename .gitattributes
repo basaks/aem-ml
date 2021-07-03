@@ -6,3 +6,4 @@
 *.dbf filter=lfs diff=lfs merge=lfs -text
 *.CPG filter=lfs diff=lfs merge=lfs -text
 *.cpg filter=lfs diff=lfs merge=lfs -text
+*.sbx filter=lfs diff=lfs merge=lfs -text
