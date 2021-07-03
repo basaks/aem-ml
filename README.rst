@@ -44,7 +44,8 @@ Once everything in installed, run the tests:
 
 .. code-block:: python
 
-   pytest tests/
+    python setup.py develop
+    pytest tests/
 
 
 Credits
