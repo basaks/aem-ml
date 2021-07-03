@@ -5,7 +5,7 @@ import json
 import numpy as np
 import geopandas as gpd
 from aem import __version__
-from aem.config import Config
+from aem.config import Config, cluster_line_segment_id, cluster_line_no
 from aem import utils
 from aem.data import load_data
 from aem.prediction import add_pred_to_data
@@ -13,7 +13,7 @@ from aem.models import modelmaps
 from aem import training
 from aem.logger import configure_logging, aemlogger as log
 from aem.utils import import_model
-from sklearn.model_selection import cross_validate, GroupKFold
+from sklearn.model_selection import cross_validate, GroupKFold, train_test_split
 
 
 @click.group()
@@ -39,37 +39,33 @@ def learn(config: str) -> None:
     X, y, w = load_data(conf)
     model = modelmaps[conf.algorithm](**conf.model_params)
     model_cols = utils.select_columns_for_model(conf)
-    import IPython; IPython.embed()
-    import sys; sys.exit()
 
-    scores = cross_validate(model, X[model_cols], y, groups=X['cluster_line_no'],
-                            fit_params={'sample_weight': w}, n_jobs=2, verbose=1000, cv=GroupKFold(5))
+    log.info(f"Running cross validation of {conf.algorithm} model with kfold {conf.cross_validation_folds}")
+    scores = cross_validate(model, X[model_cols], y, groups=X['cluster_line_segment_id'],
+                            fit_params={'sample_weight': w}, n_jobs=-1, verbose=1000,
+                            cv=GroupKFold(conf.cross_validation_folds),
+                            return_train_score=True)
 
+    log.info(f"Finished {conf.algorithm} cross validation")
 
-    import IPython; IPython.embed()
-    import sys; sys.exit()
-
-    log.info(f"Training {conf.algorithm} model")
-
-    log.info(f"Finished training {conf.algorithm} model")
-
-    train_scores = training.score_model(model, X_train_val[model_cols], y_train_val, w_train_val)
-    test_scores = training.score_model(model, X_test[model_cols], y_test, w_test)
-
-    all_scores = {'test_scores': test_scores, 'train_scores': train_scores}
-
-    score_string = "Training complete:\n"
+    log.info(f"Average cross validation score {scores['test_score'].mean()}")
 
     # report model performance on screen
-    for k, scores in all_scores.items():
-        score_string += f"{k}:\n"
-        for metric, score in scores.items():
-            score_string += "{}\t= {}\n".format(metric, score)
+    score_string = "Model scores: \n"
+
+    for k, v in scores.items():
+        if isinstance(v, np.ndarray):
+            scores[k] = v.tolist()
+        score_string += "{}\t= {}\n".format(k, v)
+
     log.info(score_string)
+
+    log.info("Fit final model with all training data")
+    model.fit(X[model_cols], y, sample_weight=w)
 
     # and also save a scores json file on disc
     with open(conf.outfile_scores, 'w') as f:
-        json.dump(all_scores, f, sort_keys=True, indent=4)
+        json.dump(scores, f, sort_keys=True, indent=4)
 
     utils.export_model(model, conf, learn=True)
 
@@ -77,7 +73,6 @@ def learn(config: str) -> None:
     X['target'] = y
     X['weights'] = w
     X.to_csv(conf.train_data, index=False)
-
     log.info(f"Saved training data and target and prediction at {conf.train_data}")
 
 
@@ -87,11 +82,12 @@ def learn(config: str) -> None:
 def optimise(config: str) -> None:
     """Optimise model parameters using Bayesian regression."""
     conf = Config(config)
-    X, y, w, X_train, y_train, w_train, X_val, y_val, w_val, X_test, y_test, w_test, X_train_val, y_train_val, \
-        w_train_val = load_data(conf)
+    X, y, w = load_data(conf)
+
     model_cols = utils.select_columns_for_model(conf)
-    model = training.bayesian_optimisation(X_train[model_cols], y_train, w_train,
-                                           X_val[model_cols], y_val, w_val, conf)
+    groups = X[cluster_line_segment_id]
+    model = training.bayesian_optimisation(X[model_cols], y, w, groups, conf)
+
     add_pred_to_data(X, conf, model)
     X['target'] = y
     X['weights'] = w

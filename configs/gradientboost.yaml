@@ -50,7 +50,7 @@ learning:
             M: 1
             L: 0.5
     cross_validation:
-        kfold: 5
+        kfold: 2
     numpy_seed: 10
     include_aem_covariates: true
     include_thickness: true

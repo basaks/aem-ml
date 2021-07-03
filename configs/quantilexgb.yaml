@@ -69,7 +69,7 @@ learning:
             learning_rate: 0.1
             n_estimators: 10
     cross_validation:
-        kfold: 5
+        kfold: 2
     weighted_model:
         weights:
             H: 2

@@ -12,7 +12,7 @@ from aem.logger import aemlogger as log
 
 # distance within which an interpretation point is considered to contribute to target values
 radius = 500
-dis_tol = 100  # meters, distance tolerance used
+dis_tol = 100  # meters, distance tolerance used`
 
 
 def prepare_aem_data(conf: Config, aem_data: pd.DataFrame):
@@ -62,27 +62,6 @@ def select_columns_for_model(conf: Config):
         cols += conf.thickness_cols
 
     return cols
-
-
-def create_train_test_set(conf: Config, data, *included_interp_data):
-    weighted_model = conf.weighted_model
-    X = data['covariates']
-    y = data['targets']
-    if weighted_model:
-        w = data['weights']
-    else:
-        w = np.ones_like(y)
-    # included_lines = np.zeros(X.shape[0], dtype=bool)  # nothing is included
-
-    # for in_data in included_interp_data:
-    #     x_max, x_min, y_max, y_min = extent_of_data(in_data)
-    #     included_lines = included_lines | \
-    #                      ((X.POINT_X < x_max + dis_tol) & (X.POINT_X > x_min - dis_tol) &
-    #                       (X.POINT_Y < y_max + dis_tol) & (X.POINT_Y > y_min - dis_tol))
-
-    cols = select_required_data_cols(conf)
-
-    return X[included_lines][cols], y[included_lines], w[included_lines], X[included_lines][twod_coords]
 
 
 def extent_of_data(data: pd.DataFrame) -> Tuple[float, float, float, float]:

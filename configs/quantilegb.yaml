@@ -65,7 +65,7 @@ learning:
             min_weight_fraction_leaf: 0.05
             max_features: "auto"
     cross_validation:
-        kfold: 5
+        kfold: 2
     weighted_model:
         weights:
             H: 2

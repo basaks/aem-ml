@@ -24,19 +24,19 @@ def split_flight_lines_into_multiple_lines(aem_data: pd.DataFrame, conf: Config)
     # t0 = time.time()
     dbscan.fit(X)
     line_no = dbscan.labels_.astype(np.uint16)
-    rc_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # list of colours
-    colors = np.array(list(islice(cycle(rc_colors), int(max(line_no) + 1))))
-    # add black color for outliers (if any)
-    colors = np.append(colors, ["#000000"])
+    # rc_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # list of colours
+    # colors = np.array(list(islice(cycle(rc_colors), int(max(line_no) + 1))))
+    # # add black color for outliers (if any)
+    # colors = np.append(colors, ["#000000"])
     # colors = ListedColormap(colors)
-    plt.figure(figsize=(16, 10))
-    plt.xlabel("longitude")
-    plt.ylabel("latitude")
-    lines = np.unique(line_no)
-    scatter = plt.scatter(X.iloc[:, 0], X.iloc[:, 1], s=10, c=colors[line_no], cmap=colors)
-    # plt.legend(handles=scatter.legend_elements()[0], labels=list(np.unique(lines)))
-
-    plt.savefig(conf.aem_lines_plot)
+    # plt.figure(figsize=(16, 10))
+    # plt.xlabel("longitude")
+    # plt.ylabel("latitude")
+    # lines = np.unique(line_no)
+    # scatter = plt.scatter(X.iloc[:, 0], X.iloc[:, 1], s=10, c=colors[line_no], cmap=colors)
+    # # plt.legend(handles=scatter.legend_elements()[0], labels=list(np.unique(lines)))
+    #
+    # plt.savefig(conf.aem_lines_plot)
 
     aem_data['cluster_line_no'] = line_no
 
@@ -56,11 +56,9 @@ def load_data(conf: Config):
         for a, w in zip(all_interp_training_datasets, train_weights):
             a['weight'] = a[conf.weight_col].map(conf.weight_dict) * w
 
-    # TODO: generate multiple segments from same survey line (2)
     # TODO: different search radius for different targets (3)
     # TODO: geology/polygon impact (4)
     # TODO: Scaling of covariates and targets (5)
-    # TODO: explore rectangular filter (6)
 
     log.info("reading covariates ...")
     original_aem_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in conf.aem_train_data]

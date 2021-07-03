@@ -48,7 +48,7 @@ learning:
         objective: 'reg:squarederror'
         max_depth: 15
         learning_rate: 0.23
-        n_estimators: 20
+        n_estimators: 5
         colsample_bynode: 0.8
         colsample_bylevel: 1.0
         colsample_bytree: 0.9
@@ -58,7 +58,7 @@ learning:
         reg_lambda: 10.0
         subsample: 1.0
     cross_validation:
-        kfold: 5
+        kfold: 3
     weighted_model:
         weights:
             H: 2

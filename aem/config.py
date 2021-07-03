@@ -8,7 +8,9 @@ confidence_indicator_col = 'BoundConf'
 
 twod_coords = ['POINT_X', 'POINT_Y']
 threed_coords = twod_coords + ['Z_coor']
-additional_cols_for_tracking = ['uniqueid', 'flight', 'line', 'cluster_line_no', 'd', 'cluster_line_segment_id']
+cluster_line_no = 'cluster_line_no'
+cluster_line_segment_id = 'cluster_line_segment_id'
+additional_cols_for_tracking = ['uniqueid', 'flight', 'line', cluster_line_no, 'd', cluster_line_segment_id]
 
 
 class Config:
@@ -48,6 +50,7 @@ class Config:
         # training
         self.algorithm = s['learning']['algorithm']
         self.model_params = s['learning']['params']
+        self.cross_validation_folds = s['learning']['cross_validation']['kfold']
         self.include_aem_covariates = s['learning']['include_aem_covariates']
         self.include_thickness = s['learning']['include_thickness']
         self.include_conductivity_derivatives = s['learning']['include_conductivity_derivatives']

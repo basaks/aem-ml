@@ -55,7 +55,7 @@ learning:
         max_features: "auto"
         n_jobs: -1
     cross_validation:
-        kfold: 5
+        kfold: 2
     weighted_model:
         weights:
             H: 2
