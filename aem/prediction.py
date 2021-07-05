@@ -4,11 +4,14 @@ from aem.config import Config
 from aem.logger import aemlogger as log
 
 
-def add_pred_to_data(X: pd.DataFrame, conf: Config, model) -> None:
+def add_pred_to_data(X: pd.DataFrame, conf: Config, model) -> pd.DataFrame:
     model_cols = utils.select_columns_for_model(conf)
     if hasattr(model, 'predict_dist'):
-        X.loc[:, 'pred'], X.loc[:, 'variance'], X.loc[:, 'lower_quantile'], X.loc[:, 'upper_quantile'] = \
-            model.predict_dist(X[model_cols], interval=conf.quantiles)
+        p, v, ql, qu = model.predict_dist(X[model_cols], interval=conf.quantiles)
+        X = pd.concat((X, pd.DataFrame({'pred': p, 'variance': v, 'lower_quantile': ql, 'upper_quantile': qu})),
+                      axis=1)
         log.info("Added prediction, variance and quantiles to output dataframe")
     else:
-        X.loc[:, 'pred'] = model.predict(X[model_cols])
+        p = model.predict(X[model_cols])
+        X = pd.concat((X, pd.DataFrame({'pred': p})), axis=1)
+    return X

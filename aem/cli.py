@@ -3,10 +3,9 @@ import sys
 import click
 import json
 import numpy as np
-import geopandas as gpd
-from sklearn.model_selection import cross_validate, GroupKFold, train_test_split
+from sklearn.model_selection import cross_validate, GroupKFold
 from aem import __version__
-from aem.config import Config, cluster_line_segment_id, cluster_line_no
+from aem.config import Config, cluster_line_segment_id
 from aem import utils
 from aem.data import load_data, load_covariates
 from aem.prediction import add_pred_to_data
@@ -73,7 +72,7 @@ def learn(config: str) -> None:
 
     utils.export_model(model, conf, learn=True)
 
-    add_pred_to_data(X, conf, model)
+    X = add_pred_to_data(X, conf, model)
     X['target'] = y
     X['weights'] = w
     X.to_csv(conf.train_data, index=False)
@@ -91,7 +90,7 @@ def optimise(config: str) -> None:
     groups = X[cluster_line_segment_id]
     model = training.bayesian_optimisation(X, y, w, groups, conf)
 
-    add_pred_to_data(X, conf, model)
+    X = add_pred_to_data(X, conf, model)
     X['target'] = y
     X['weights'] = w
     X.to_csv(conf.optimisation_data, index=False)
@@ -118,7 +117,7 @@ def predict(config: str, model_type: str) -> None:
 
     X = utils.prepare_aem_data(conf, pred_aem_data)[utils.select_required_data_cols(conf)]
 
-    add_pred_to_data(X, conf, model)
+    X = add_pred_to_data(X, conf, model)
     log.info(f"Finished predicting {conf.algorithm} model")
     X.to_csv(conf.pred_data, index=False)
     log.info(f"Saved training data and target and prediction at {conf.train_data}")

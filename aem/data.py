@@ -21,10 +21,10 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
     log.info("Segmenting aem lines using DBSCAN clustering algorithm")
     from matplotlib.colors import ListedColormap
 
-    X = aem_data[utils.twod_coords]
+    _X = aem_data.loc[:, utils.twod_coords]
     dbscan = DBSCAN(eps=conf.aem_line_dbscan_eps, n_jobs=-1, min_samples=10)
     # t0 = time.time()
-    dbscan.fit(X)
+    dbscan.fit(_X)
     line_no = dbscan.labels_.astype(np.uint16)
     rc_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # list of colours
     colors = np.array(list(islice(cycle(rc_colors), int(max(line_no) + 1))))
@@ -35,7 +35,7 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
     plt.xlabel("longitude")
     plt.ylabel("latitude")
     # lines = np.unique(line_no)
-    scatter = plt.scatter(X.iloc[:, 0], X.iloc[:, 1], s=10, c=colors[line_no], cmap=colors)
+    scatter = plt.scatter(_X.iloc[:, 0], _X.iloc[:, 1], s=10, c=colors[line_no], cmap=colors)
     # plt.legend(handles=scatter.legend_elements()[0], labels=list(np.unique(lines)))
     fig_file = conf.aem_lines_plot_train if is_train else conf.aem_lines_plot_pred
     plt.savefig(fig_file)
@@ -87,15 +87,15 @@ def load_data(conf: Config):
 
 
 def load_covariates(is_train: bool, conf: Config):
-    log.info(f"Processing covariates from {conf.aem_pred_data}....")
+    aem_files = conf.aem_train_data if is_train else [conf.aem_pred_data]
+    log.info(f"Processing covariates from {aem_files}....")
+    # TODO: Scaling of covariates and targets (5) - similar performance with xgboost without scaling (2)
     # TODO: different search radius for different targets (3)
     # TODO: geology/polygon impact (4)
-    # TODO: Scaling of covariates and targets (5) - similar performance with xgboost without scaling
-    # TODO: True probabilistic models (gaussian process/GPs, tensorflow probability model classes)
+    # TODO: True probabilistic models (gaussian process/GPs, tensorflow/pytorch probability model classes)
     # TODO: move segmenting flight line after interpretation point intersection/interpolation
-    log.info("reading covariates ...")
     aem_files = conf.aem_train_data if is_train else [conf.aem_pred_data]
     original_aem_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in aem_files]
-    original_aem_data = pd.concat(original_aem_datasets, axis=0)
-    original_aem_data = split_flight_lines_into_multiple_segments(original_aem_data, is_train, conf)
-    return original_aem_data
+    aem_data = pd.concat(original_aem_datasets, axis=0)
+    aem_data = split_flight_lines_into_multiple_segments(aem_data, is_train, conf)
+    return aem_data
