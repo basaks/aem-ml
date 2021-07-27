@@ -7,7 +7,7 @@ data:
             - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
         weights:
             - 1
-    apply_model: 'high_res_cond_clip_albers_skip_6.shp'
+    apply_model: 'oss.shp'
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
@@ -48,7 +48,7 @@ learning:
         objective: 'reg:squarederror'
         max_depth: 15
         learning_rate: 0.23
-        n_estimators: 5
+        n_estimators: 200
         colsample_bynode: 0.8
         colsample_bylevel: 1.0
         colsample_bytree: 0.9
@@ -95,7 +95,7 @@ learning:
 
 
 output:
-    directory: out
+    directory: out/xgboost/
     train:
         covariates_csv: true
         true_vs_pred: true

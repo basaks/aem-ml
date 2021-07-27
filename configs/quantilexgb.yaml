@@ -2,12 +2,12 @@ data:
     aem_folder: 'aem_data'
     train_data:
         aem_train_data:
-            - 'high_res_cond_clip_albers_skip_6.shp'
+            - 'train.shp'
         targets:
             - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
         weights:
             - 1
-    apply_model: 'high_res_cond_clip_albers_skip_6.shp'
+    apply_model: 'oss.shp'
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
@@ -47,27 +47,51 @@ learning:
     params:
         mean_model_params:
             objective: 'reg:squarederror'
-            max_depth: 10
-            learning_rate: 0.1
+            max_depth: 15
+            learning_rate: 0.23
             n_estimators: 10
+            colsample_bynode: 0.8
+            colsample_bylevel: 1.0
+            colsample_bytree: 0.9
+            max_delta_step: 9
+            gamma: 0.5
+            reg_alpha: 57.96
+            reg_lambda: 10.0
+            subsample: 1.0
         upper_quantile_params:
             alpha: 0.75
             delta: 1.0
             thresh: 1.0
             variance: 1.0
             objective: 'reg:squarederror'
-            max_depth: 10
-            learning_rate: 0.1
+            max_depth: 15
+            learning_rate: 0.23
             n_estimators: 10
+            colsample_bynode: 0.8
+            colsample_bylevel: 1.0
+            colsample_bytree: 0.9
+            max_delta_step: 9
+            gamma: 0.5
+            reg_alpha: 57.96
+            reg_lambda: 10.0
+            subsample: 1.0
         lower_quantile_params:
             alpha: 0.25
             delta: 1.0
             thresh: 1.0
             variance: 1.0
             objective: 'reg:squarederror'
-            max_depth: 10
-            learning_rate: 0.1
+            max_depth: 15
+            learning_rate: 0.23
             n_estimators: 10
+            colsample_bynode: 0.8
+            colsample_bylevel: 1.0
+            colsample_bytree: 0.9
+            max_delta_step: 9
+            gamma: 0.5
+            reg_alpha: 57.96
+            reg_lambda: 10.0
+            subsample: 1.0
     cross_validation:
         kfold: 3
     weighted_model:
@@ -80,7 +104,7 @@ learning:
     include_thickness: true
     include_conductivity_derivatives: true
     smooth_twod_covariates: true
-    smooth_covariates_kernel_size: (21, 3)
+    smooth_covariates_kernel_size: (21, 9)
     optimisation:
         searchcv_params:
             n_iter: 6
