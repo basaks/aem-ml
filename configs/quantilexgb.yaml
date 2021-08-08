@@ -49,7 +49,7 @@ learning:
             objective: 'reg:squarederror'
             max_depth: 15
             learning_rate: 0.23
-            n_estimators: 10
+            n_estimators: 100
             colsample_bynode: 0.8
             colsample_bylevel: 1.0
             colsample_bytree: 0.9
@@ -58,6 +58,7 @@ learning:
             reg_alpha: 57.96
             reg_lambda: 10.0
             subsample: 1.0
+            n_jobs: -1
         upper_quantile_params:
             alpha: 0.75
             delta: 1.0
@@ -66,7 +67,7 @@ learning:
             objective: 'reg:squarederror'
             max_depth: 15
             learning_rate: 0.23
-            n_estimators: 10
+            n_estimators: 100
             colsample_bynode: 0.8
             colsample_bylevel: 1.0
             colsample_bytree: 0.9
@@ -75,6 +76,7 @@ learning:
             reg_alpha: 57.96
             reg_lambda: 10.0
             subsample: 1.0
+            n_jobs: -1
         lower_quantile_params:
             alpha: 0.25
             delta: 1.0
@@ -83,7 +85,7 @@ learning:
             objective: 'reg:squarederror'
             max_depth: 15
             learning_rate: 0.23
-            n_estimators: 10
+            n_estimators: 100
             colsample_bynode: 0.8
             colsample_bylevel: 1.0
             colsample_bytree: 0.9
@@ -92,6 +94,7 @@ learning:
             reg_alpha: 57.96
             reg_lambda: 10.0
             subsample: 1.0
+            n_jobs: -1
     cross_validation:
         kfold: 3
     weighted_model:
@@ -128,7 +131,7 @@ learning:
 
 
 output:
-    directory: out
+    directory: out/quantile_xgb
     train:
         covariates_csv: true
         true_vs_pred: true

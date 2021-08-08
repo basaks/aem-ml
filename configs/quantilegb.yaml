@@ -2,12 +2,12 @@ data:
     aem_folder: 'aem_data'
     train_data:
         aem_train_data:
-            - 'high_res_cond_clip_albers_skip_6.shp'
+            - 'train.shp'
         targets:
             - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
         weights:
             - 1
-    apply_model: 'high_res_cond_clip_albers_skip_6.shp'
+    apply_model: 'oss.shp'
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
@@ -36,33 +36,35 @@ learning:
     params:
         mean_model_params:
             loss: 'ls'
-            max_depth: 10
+            max_depth: 20
             learning_rate: 0.1
-            n_estimators: 10
-            subsample: 0.8
+            n_estimators: 200
+            subsample: 0.9
             min_samples_split: 2
             min_samples_leaf: 2
-            min_weight_fraction_leaf: 0.05
+            min_weight_fraction_leaf: 0.0
             max_features: "auto"
         upper_quantile_params:
             loss: 'quantile'
             alpha: 0.95
+            max_depth: 20
             learning_rate: 0.1
-            n_estimators: 10
-            subsample: 0.8
+            n_estimators: 200
+            subsample: 0.9
             min_samples_split: 2
             min_samples_leaf: 2
-            min_weight_fraction_leaf: 0.05
+            min_weight_fraction_leaf: 0.0
             max_features: "auto"
         lower_quantile_params:
             loss: 'quantile'
             alpha: 0.05
+            max_depth: 20
             learning_rate: 0.1
-            n_estimators: 10
-            subsample: 0.8
+            n_estimators: 200
+            subsample: 0.9
             min_samples_split: 2
             min_samples_leaf: 2
-            min_weight_fraction_leaf: 0.05
+            min_weight_fraction_leaf: 0.0
             max_features: "auto"
     cross_validation:
         kfold: 3
@@ -79,7 +81,7 @@ learning:
     smooth_covariates_kernel_size: (21, 3)
 
 output:
-    directory: out
+    directory: out/quantile_gb/
     train:
         covariates_csv: true
         true_vs_pred: true

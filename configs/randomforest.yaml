@@ -7,7 +7,7 @@ data:
             - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
         weights:
             - 1
-    apply_model: 'high_res_cond_clip_albers_skip_6.shp'
+    apply_model: 'oss.shp'
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
@@ -46,16 +46,15 @@ learning:
     algorithm: randomforest
     params:
         criterion: 'mse'
-        max_depth: 10
-        n_estimators: 10
-        max_samples: 0.5
+        max_depth: 15
+        n_estimators: 300
         min_samples_split: 2
         min_samples_leaf: 2
-        min_weight_fraction_leaf: 0.05
+        min_weight_fraction_leaf: 0.0
         max_features: "auto"
         n_jobs: -1
     cross_validation:
-        kfold: 2
+        kfold: 5
     weighted_model:
         weights:
             H: 2
@@ -69,7 +68,7 @@ learning:
     smooth_covariates_kernel_size: (21, 3)
     optimisation:
         searchcv_params:
-            n_iter: 6
+            n_iter: 36
             cv: 2
             verbose: 1000
             n_points: 3
@@ -77,7 +76,7 @@ learning:
         params_space:
             'max_depth': Integer(1, 15)
             'n_estimators': Integer(10, 100)
-            'max_samples': Real(0.01, 1.0, prior='uniform')
+            'max_samples': Real(0.01, 0.99, prior='uniform')
             'max_features': Categorical(['auto', 'sqrt', 'log2'])
             'min_samples_split': Integer(2, 50)
             'min_samples_leaf': Integer(1, 50)
@@ -85,7 +84,7 @@ learning:
 
 
 output:
-    directory: out
+    directory: out/rf/
     train:
         covariates_csv: true
         true_vs_pred: true
