@@ -272,6 +272,7 @@ learning_rate = 0.1  # initial learning rate
 decay_rate = 0.1
 momentum = 0.8
 
+normalizer = preprocessing.Normalization()
 
 def exp_decay(epoch):
     lrate = learning_rate * np.exp(-decay_rate*epoch)
@@ -283,6 +284,8 @@ lr_rate = LearningRateScheduler(exp_decay)
 early_stopping = EarlyStopping(monitor='loss', min_delta=1.0e-6, verbose=1, patience=10)
 callbacks_list = [loss_history, lr_rate, early_stopping]
 
+# TODO: Tensorflow or a DNN regression class
+
 
 class KerasRegressorWrapper(KerasRegressor):
 
@@ -291,17 +294,13 @@ class KerasRegressorWrapper(KerasRegressor):
         return r2_score(y, y_pred, **kwargs)
 
 
-
-
 class TFProbRegression:
 
-    def fit(self, X, y, norm):
+    def build_and_compile_model(self, X, y, norm):
         model = tf.keras.Sequential([
             norm,
-            layers.Dense(200, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
+            layers.Dense(50, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
             layers.Dense(100, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
-            layers.Dense(50, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
-            layers.Dense(50, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
             layers.Dense(1, activation='linear')
         ])
 
@@ -342,5 +341,5 @@ modelmaps = {
     'quantilegb': QuantileGradientBoosting,
     'randomforest': QuantileRandomForestRegressor,
     'quantilexgb': QuantileXGB,
-    'tensorflowprobability': KerasRegressorWrapper,
+    'tfregression': KerasRegressorWrapper,
 }
