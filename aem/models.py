@@ -2,6 +2,7 @@ import numpy as np
 from functools import partial
 from scipy.stats import norm
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.metrics import r2_score
 from sklearn.base import BaseEstimator
 from sklearn.base import RegressorMixin
 from xgboost.sklearn import XGBRegressor
@@ -195,70 +196,144 @@ def optimizer(args):
     pass
 
 
-class TensorFlow(RandomForestRegressor):
-    """
-    Implements a Tensor Flow probability output using regression and probabilistic layers
-    """
+# class TensorFlow(RandomForestRegressor):
+#     """
+#     Implements a Tensor Flow probability output using regression and probabilistic layers
+#     """
+#
+#     # Simple Linear Regression (TF)
+#
+#     def negloglik = lambda y, p_y: -p_y.logprob(y)
+#
+#     def modeltf = tf.keras.Sequential([
+#         tf.keras.layer.Dense(1),
+#         tfp.layers.DistributionLambda(lambda t: tfd.Normal(loc=t, scale=1))
+#     ])
+#
+#     def modeltf.compile(optimizer=tf.optimizers.Adam(learning_rate=0.05), loss=negloglik)
+#
+#     def modeltf.fit(x, y, epochs =500, verbose=False)
+#
+#     def yhattf = modeltf(x_tst)
+#
+#     # Known Unknowns TF
+#
+#     def modelKunk = tfk.Sequential([
+#         tf.keras.layers.Dense(1 + 1)
+#         tfp.layers.DistributionLambda(
+#             lambda t: tfd.Normal(loc=t[..., :1],
+#                                  scale=1e-3 + tf.math.softplus(0.05 * t[..., 1:]))),
+#         ])
+#
+#     def modelKunk.compile(optimizer=tf.optimizers.Adam(learning_rate=0.05), loss=negloglik)
+#
+#     def modelKunk.fit(x, y, epochs = 500, verbose = False)
+#
+#     def yhatKunk = modelKunk(x_tst)
+#
+#     # Unknown Unknowns TF
+#
+#     def modelUkunk = tf.keras.Sequential([
+#         tfp.layers.DenseVariational(1, posterior_mean_field, prior_trainable),
+#         tfp.layers.DistributionLambda(lambda t: tfd.Normal(loc=t, scale=1)),
+#         ])
+#
+#     def modelUkunk.compile(optimizer=tf.optimizers.Adam(learning_rate=0.05), loss=negloglik)
+#
+#     def modelUkunk.fit(x, y, epochs = 500, verbose = False)
+#
+#     def yhatsUkunk = [modelUkunk(x_tst) for i in range(100)]
+#
+#     # Known and Unknown Unknowns TF
+#
+#     def modelKUunk = tf.keras.Sequential([
+#         tfp.layers.DenseVariational(1 + 1, posterior_mean_field, prior_trainable),
+#         tfp.layers.DistributionLambda(
+#             lambda t: tfd.Normal(loc=t[..., :1],
+#                                  scale=1e-3 + tf.math.softplus(0.01 * t[..., 1:]))
+#         )
+#     ])
+#
+#     def modelKUunk.compile(optimizer=tf.optimizers.Adam(learning_rate = 0.05), loss=negloglik)
+#     def modelKUunk.fit(x, y, epochs=500, verbose=False);
+#     def yhatsKUunk = modelKUunk(x_tst) for _ in range(100)]
 
-    # Simple Linear Regression (TF)
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers, regularizers
+from tensorflow.keras.layers.experimental import preprocessing
+from tensorflow.keras.callbacks import LearningRateScheduler, History, EarlyStopping
+from tensorflow.keras import backend as K
+# from: https://stackoverflow.com/questions/44132652/keras-how-to-perform-a-prediction-using-kerasregressor
+# https://www.kaggle.com/hendraherviawan/regression-with-kerasregressor
+from keras.wrappers.scikit_learn import KerasRegressor
+epochs = 100
+learning_rate = 0.1  # initial learning rate
+decay_rate = 0.1
+momentum = 0.8
 
-    def negloglik = lambda y, p_y: -p_y.logprob(y)
 
-    def modeltf = tf.keras.Sequential([
-        tf.keras.layer.Dense(1),
-        tfp.layers.DistributionLambda(lambda t: tfd.Normal(loc=t, scale=1))
-    ])
+def exp_decay(epoch):
+    lrate = learning_rate * np.exp(-decay_rate*epoch)
+    return lrate
 
-    def modeltf.compile(optimizer=tf.optimizers.Adam(learning_rate=0.05), loss=negloglik)
+# learning schedule callback
+loss_history = History()
+lr_rate = LearningRateScheduler(exp_decay)
+early_stopping = EarlyStopping(monitor='loss', min_delta=1.0e-6, verbose=1, patience=10)
+callbacks_list = [loss_history, lr_rate, early_stopping]
 
-    def modeltf.fit(x, y, epochs =500, verbose=False)
 
-    def yhattf = modeltf(x_tst)
+class KerasRegressorWrapper(KerasRegressor):
 
-    # Known Unknowns TF
+    def score(self, X, y, **kwargs):
+        y_pred = self.predict(X)
+        return r2_score(y, y_pred, **kwargs)
 
-    def modelKunk = tfk.Sequential([
-        tf.keras.layers.Dense(1 + 1)
-        tfp.layers.DistributionLambda(
-            lambda t: tfd.Normal(loc=t[..., :1],
-                                 scale=1e-3 + tf.math.softplus(0.05 * t[..., 1:]))),
+
+
+
+class TFProbRegression:
+
+    def fit(self, X, y, norm):
+        model = tf.keras.Sequential([
+            norm,
+            layers.Dense(200, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
+            layers.Dense(100, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
+            layers.Dense(50, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
+            layers.Dense(50, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
+            layers.Dense(1, activation='linear')
         ])
 
-    def modelKunk.compile(optimizer=tf.optimizers.Adam(learning_rate=0.05), loss=negloglik)
+        model.compile(loss='mean_absolute_error',
+                      optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+                      metrics=['mean_absolute_error', 'mean_squared_error', r2_score]
+                      )
 
-    def modelKunk.fit(x, y, epochs = 500, verbose = False)
-
-    def yhatKunk = modelKunk(x_tst)
-
-    # Unknown Unknowns TF
-
-    def modelUkunk = tf.keras.Sequential([
-        tfp.layers.DenseVariational(1, posterior_mean_field, prior_trainable),
-        tfp.layers.DistributionLambda(lambda t: tfd.Normal(loc=t, scale=1)),
-        ])
-
-    def modelUkunk.compile(optimizer=tf.optimizers.Adam(learning_rate=0.05), loss=negloglik)
-
-    def modelUkunk.fit(x, y, epochs = 500, verbose = False)
-
-    def yhatsUkunk = [modelUkunk(x_tst) for i in range(100)]
-
-    # Known and Unknown Unknowns TF
-
-    def modelKUunk = tf.keras.Sequential([
-        tfp.layers.DenseVariational(1 + 1, posterior_mean_field, prior_trainable),
-        tfp.layers.DistributionLambda(
-            lambda t: tfd.Normal(loc=t[..., :1],
-                                 scale=1e-3 + tf.math.softplus(0.01 * t[..., 1:]))
+        dnn_model = build_KerasRegressorand_compile_model(normalizer)
+        history = dnn_model.fit(
+            X, y,
+            validation_split=0.2,
+            batch_size=200,
+            callbacks=callbacks_list,
+            verbose=2, epochs=epochs
         )
-    ])
+        return history
 
-    def modelKUunk.compile(optimizer=tf.optimizers.Adam(learning_rate = 0.05), loss=negloglik)
-    def modelKUunk.fit(x, y, epochs=500, verbose=False);
-    def yhatsKUunk = modelKUunk(x_tst) for _ in range(100)]
+    plot_loss(history)
 
+    test_results['dnn_model'] = dnn_model.evaluate(test_features, y_test, verbose=1)
+    # print(pd.DataFrame(test_results, index=['Mean absolute error [Ceno Depth]']).T)
 
+    # print(r2_score(y_test, linear_model.predict(test_features)))
+    print('r2 score dnn: ', r2_score_sklearn(y_test, dnn_model.predict(test_features)))
 
+    import time
+    # pickle.dump(searchcv, open(f"{reg.__class__.__name__}.{int(time.time())}.model", 'wb'))
+    str_with_time = f"dnn.{int(time.time())}.model"
+    Path('saved_model').mkdir(exist_ok=True)
+    model_file_name = Path('saved_model').joinpath(str_with_time)
+    dnn_model.save(model_file_name)
 
 
 modelmaps = {
@@ -267,5 +342,5 @@ modelmaps = {
     'quantilegb': QuantileGradientBoosting,
     'randomforest': QuantileRandomForestRegressor,
     'quantilexgb': QuantileXGB,
-    'tensorflowprobability': TensorFlow,
+    'tensorflowprobability': KerasRegressorWrapper,
 }
