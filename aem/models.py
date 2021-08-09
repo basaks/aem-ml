@@ -286,7 +286,17 @@ callbacks_list = [loss_history, lr_rate, early_stopping]
 
 # TODO: Tensorflow or a DNN regression class
 
-
+class DNNRegessor:
+    estimator = tf.estimator.DNNRegressor(
+        feature_columns=[X,y],
+        hidden_units=[1024,512,256],
+        optimizer=lambda: tf.keras.optimizers.Adam(
+            learning_rate=tf.compat.v1.train.exponential_decay(
+                learning_rate=0.1,
+                global_step=tf.compat.v1.train.get_global_step(),
+                decay_steps=10000,
+                decay_rate=0.96))
+    )
 class KerasRegressorWrapper(KerasRegressor):
 
     def score(self, X, y, **kwargs):
