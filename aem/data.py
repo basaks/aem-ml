@@ -94,7 +94,6 @@ def load_covariates(is_train: bool, conf: Config):
     # TODO: geology/polygon impact (4)
     # TODO: True probabilistic models (gaussian process/GPs, tensorflow/pytorch probability model classes)
     # TODO: move segmenting flight line after interpretation point intersection/interpolation
-    aem_files = conf.aem_train_data if is_train else [conf.aem_pred_data]
     original_aem_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in aem_files]
     aem_data = pd.concat(original_aem_datasets, axis=0)
     aem_data = split_flight_lines_into_multiple_segments(aem_data, is_train, conf)
