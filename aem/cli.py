@@ -3,7 +3,8 @@ import sys
 import click
 import json
 import numpy as np
-from sklearn.model_selection import cross_validate, GroupKFold
+from sklearn.model_selection import cross_validate, GroupKFold, cross_val_predict
+from sklearn.metrics import r2_score, explained_variance_score, mean_squared_error, mean_absolute_error
 from aem import __version__
 from aem.config import Config, cluster_line_segment_id
 from aem import utils
@@ -26,6 +27,11 @@ def main(verbosity: str) -> int:
     return 0
 
 
+regression_metrics = {
+    r2_score, mean_squared_error, mean_absolute_error, explained_variance_score
+}
+
+
 @main.command()
 @click.option("-c", "--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
@@ -41,34 +47,27 @@ def learn(config: str) -> None:
 
     if conf.cross_validate:
         log.info(f"Running cross validation of {conf.algorithm} model with kfold {conf.cross_validation_folds}")
-        scores = cross_validate(model, X[model_cols], y, groups=X['cluster_line_segment_id'],
-                                fit_params={'sample_weight': w}, n_jobs=-1, verbose=1000,
-                                cv=GroupKFold(conf.cross_validation_folds),
-                                return_train_score=True)
-    else:
-        log.info(f"Running {conf.algorithm} model validation with train and test sets")
-        scores = training.train_test_score(X, y, w, conf, conf.model_params)
+        predictions = cross_val_predict(model, X[model_cols], y, groups=X['cluster_line_segment_id'],
+                                        fit_params={'sample_weight': w}, n_jobs=-1, verbose=1000,
+                                        cv=GroupKFold(conf.cross_validation_folds))
+        scores = {v.__name__: v(y_true=y, y_pred=predictions, sample_weight=w) for v in regression_metrics}
+        log.info(f"Finished {conf.algorithm} cross validation")
 
-    log.info(f"Finished {conf.algorithm} cross validation")
+        # report model performance on screen
+        score_string = "Model scores: \n"
+        for k, v in scores.items():
+            if isinstance(v, np.ndarray):
+                scores[k] = v.tolist()
+            score_string += "{}\t= {}\n".format(k, v)
 
-    log.info(f"Average cross validation score {scores['test_score'].mean()}")
-
-    # report model performance on screen
-    score_string = "Model scores: \n"
-
-    for k, v in scores.items():
-        if isinstance(v, np.ndarray):
-            scores[k] = v.tolist()
-        score_string += "{}\t= {}\n".format(k, v)
-
-    log.info(score_string)
+        log.info(score_string)
+        # and also save a scores json file on disc
+        with open(conf.outfile_scores, 'w') as f:
+            json.dump(scores, f, sort_keys=True, indent=4)
+        X['cross_val_pred'] = predictions
 
     log.info("Fit final model with all training data")
     model.fit(X[model_cols], y, sample_weight=w)
-
-    # and also save a scores json file on disc
-    with open(conf.outfile_scores, 'w') as f:
-        json.dump(scores, f, sort_keys=True, indent=4)
 
     utils.export_model(model, conf, learn=True)
 

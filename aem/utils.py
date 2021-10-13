@@ -1,6 +1,6 @@
 import joblib
 from pathlib import Path
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Union
 
 import numpy as np
 from scipy.signal import medfilt2d
@@ -161,10 +161,12 @@ def add_delta(line: pd.DataFrame, conf: Config, origin=None):
     return line[line_cols + ['d', 'cluster_line_segment_id']]
 
 
-def plot_2d_section(X_val_line: pd.DataFrame,
-                    X_val_line_coords: pd.DataFrame,
-                    val_interp_line: pd.DataFrame, model, col_names: List[str],
-                    conductivities: List[str], thickness: List[str], slope=False,
+def plot_2d_section(X: pd.DataFrame,
+                    cluster_line_no,
+                    conf: Config,
+                    col_names: Union[str, List[str]] = [],
+                    log_conductivity=False,
+                    slope=False,
                     flip_column=False, v_min=0.3, v_max=0.8):
     if isinstance(col_names, str):
         col_names = [col_names]
@@ -172,25 +174,24 @@ def plot_2d_section(X_val_line: pd.DataFrame,
     from scipy.signal import savgol_filter
     import matplotlib.pyplot as plt
     from matplotlib.colors import LogNorm, Normalize, SymLogNorm, PowerNorm
-    from matplotlib.colors import Colormap
-    original_cols = X_val_line.columns[:]
-    line = add_delta(X_val_line_coords)
-    X_val_line = pd.concat([X_val_line, line], axis=1)
-    origin = (X_val_line.POINT_X.iat[0], X_val_line.POINT_Y.iat[0])
-    val_interp_line = add_delta(val_interp_line, origin=origin)
+    # from matplotlib.colors import Colormap
+    X = X[X.cluster_line_no == cluster_line_no]
+    origin = (X.POINT_X.iat[0], X.POINT_Y.iat[0])
     if slope:
-        d_conduct_cols = ['d_' + c for c in conductivities]
-        Z = X_val_line[d_conduct_cols]
+        Z = X[conf.conductivity_derivatives_cols]
         Z = Z - np.min(np.min((Z))) + 1.0e-10
     else:
-        Z = X_val_line[conductivities]
+        Z = X[conf.conductivity_cols]
 
-    h = X_val_line[thickness]
-    dd = X_val_line.d
+    if log_conductivity:
+        Z = np.log10(Z)
+
+    h = X[conf.thickness_cols]
+    dd = X.d
     ddd = np.atleast_2d(dd).T
     d = np.repeat(ddd, h.shape[1], axis=1)
     fig, ax = plt.subplots(figsize=(40, 4))
-    cmap = plt.get_cmap('viridis')
+    cmap = plt.get_cmap('turbo')
 
     if slope:
         norm = LogNorm(vmin=v_min, vmax=v_max)
@@ -200,12 +201,19 @@ def plot_2d_section(X_val_line: pd.DataFrame,
     im = ax.pcolormesh(d, -h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True)
     fig.colorbar(im, ax=ax)
     axs = ax.twinx()
-    y_pred = -model.predict(X_val_line[original_cols])
+    if 'cross_val_pred' in X.columns:  # training/cross-val
+        y_pred = X['cross_val_pred']
+    else:  # prediction
+        y_pred = X['pred']
+    if 'target' in X.columns:
+        target = X['target']
+        ax.plot(X.d, -target, label='interpretation', linewidth=2, color='k')
+
     pred = savgol_filter(y_pred, 11, 3)  # window size 51, polynomial order 3
-    ax.plot(X_val_line.d, pred, label='prediction', linewidth=2, color='r')
-    ax.plot(val_interp_line.weight_dict, -val_interp_line.Z_coor, label='interpretation', linewidth=2, color='k')
-    # for c in col_names:
-    #     axs.plot(X_val_line.d, -X_val_line[c] if flip_column else X_val_line[c], label=c, linewidth=2, color='orange')
+    ax.plot(X.d, -pred, label='prediction', linewidth=2, color='r')
+
+    for c in col_names:
+        axs.plot(X.d, -X[c] if flip_column else X[c], label=c, linewidth=2, color='orange')
 
     ax.set_xlabel('distance along aem line (m)')
     ax.set_ylabel('depth (m)')
@@ -244,7 +252,7 @@ def plot_conductivity(X: pd.DataFrame,
     ddd = np.atleast_2d(dd).T
     d = np.repeat(ddd, h.shape[1], axis=1)
     fig, ax = plt.subplots(figsize=(40, 4))
-    cmap = plt.get_cmap('viridis')
+    cmap = plt.get_cmap('turbo')
 
     if slope:
         norm = LogNorm(vmin=v_min, vmax=v_max)
@@ -285,3 +293,13 @@ def import_model(conf: Config, learn=True):
 
 def plot_cond_mesh(X, conf):
     return
+#
+# def plot_feature_importance(X, y, optimised_model: BayesSearchCV):
+#     xgb_model = XGBRegressor(**optimised_model.best_params_)
+#     xgb_model.fit(X, y)
+#     non_zero_indices = xgb_model.feature_importances_ >= 0.001
+#     non_zero_cols = X_all.columns[non_zero_indices]
+#     non_zero_importances = xgb_model.feature_importances_[non_zero_indices]
+#     sorted_non_zero_indices = non_zero_importances.argsort()
+#     plt.barh(non_zero_cols[sorted_non_zero_indices], non_zero_importances[sorted_non_zero_indices])
+#     plt.xlabel("Xgboost Feature Importance")
