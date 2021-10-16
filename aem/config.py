@@ -43,6 +43,12 @@ class Config:
         self.shapefile_rows = s['data']['rows']
         self.aem_line_dbscan_eps = s['data']['aem_line_scan_radius']
         self.aem_line_splits = s['data']['aem_line_splits']
+        # oos_validation
+        self.oos_validation = False
+        self.oos_validation_data = [Path(self.aem_folder).joinpath(p)
+                                    for p in s['data']['oos_validation']['aem_validation_data']]
+        self.oos_interp_data = [Path(self.aem_folder).joinpath(p)
+                                for p in s['data']['oos_validation']['targets']]
 
         # np randomisation
         self.numpy_seed = s['learning']['numpy_seed']
@@ -93,17 +99,18 @@ class Config:
         self.conductivity_and_derivatives_cols = conductivity_and_derivatives_cols
 
         # co-ordination
-        self.optimised_model = s['output']['pred']['optimised_model']
         self.model_file = Path(self.output_dir).joinpath(self.name + ".model")
         self.optimised_model_params = Path(self.output_dir).joinpath(self.name + "_searchcv_params.json")
         self.optimised_model_file = Path(self.output_dir).joinpath(self.name + "_searchcv.model")
         self.outfile_scores = Path(self.output_dir).joinpath(self.name + "_scores.json")
+        self.oos_validation_scores = Path(self.output_dir).joinpath(self.name + "_oos_validation_scores.json")
         self.optimised_model_scores = Path(self.output_dir).joinpath(self.name + "_searchcv_scores.json")
 
         # outputs
         self.train_data = Path(self.output_dir).joinpath(self.name + "_train.csv")
         self.optimisation_data = Path(self.output_dir).joinpath(self.name + "_optimisation.csv")
         self.pred_data = Path(self.output_dir).joinpath(self.name + "_pred.csv")
+        self.oos_data = Path(self.output_dir).joinpath(self.name + "_oos.csv")
         self.quantiles = s['output']['pred']['quantiles']
         self.aem_lines_plot_train = Path(self.output_dir).joinpath('aem_survey_lines_train.jpg')
         self.aem_lines_plot_pred = Path(self.output_dir).joinpath('aem_survey_lines_pred.jpg')

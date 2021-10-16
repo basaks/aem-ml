@@ -43,15 +43,24 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
     aem_data[cluster_line_no] = line_no
 
     aem_data = aem_data.groupby(cluster_line_no).apply(utils.add_delta, conf=conf)
+    log.info(f"Found {len(np.unique(line_no))} groups")
     log.info("Finished segmentation")
     return aem_data
 
 
 def load_data(conf: Config):
     original_aem_data = load_covariates(is_train=True, conf=conf)
+    if conf.oos_validation:
+        print(conf.oos_interp_data)
+        all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in
+                                        conf.oos_interp_data]
+    else:
+        print(conf.oos_interp_data)
+        all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in
+                                        conf.interp_data]
 
     log.info("reading interp data...")
-    all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in conf.interp_data]
+
     train_weights = conf.train_data_weights
 
     # apply the weights due to confidence levels assigned by the interpreter on the interpretation/target values
@@ -68,14 +77,15 @@ def load_data(conf: Config):
 
     aem_xy_and_other_covs = utils.prepare_aem_data(conf, original_aem_data)[utils.select_required_data_cols(conf)]
     smooth = '_smooth_' if conf.smooth_twod_covariates else '_'
-    data_path = f'covariates_targets_2d{smooth}weights.data'
-    if not Path(data_path).exists():
-        data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
-        log.info("saving data on disc for future use")
-        joblib.dump(data, open(data_path, 'wb'))
-    else:
-        log.warning("Reusing data from disc!!!")
-        data = joblib.load(open(data_path, 'rb'))
+    # data_path = f'covariates_targets_2d{smooth}weights.data'
+    data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
+    # if not Path(data_path).exists():
+    #     data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
+    #     log.info("saving data on disc for future use")
+    #     joblib.dump(data, open(data_path, 'wb'))
+    # else:
+    #     log.warning("Reusing data from disc!!!")
+    #     data = joblib.load(open(data_path, 'rb'))
 
     X = data['covariates']
     y = data['targets']
@@ -87,7 +97,11 @@ def load_data(conf: Config):
 
 
 def load_covariates(is_train: bool, conf: Config):
-    aem_files = conf.aem_train_data if is_train else [conf.aem_pred_data]
+    if conf.oos_validation:
+        aem_files = conf.oos_validation_data if is_train else [conf.aem_pred_data]
+    else:
+        aem_files = conf.aem_train_data if is_train else [conf.aem_pred_data]
+
     log.info(f"Processing covariates from {aem_files}....")
     # TODO: Scaling of covariates and targets (5) - similar performance with xgboost without scaling (2)
     # TODO: different search radius for different targets (3)

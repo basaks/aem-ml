@@ -198,8 +198,9 @@ def plot_2d_section(X: pd.DataFrame,
     else:
         norm = Normalize(vmin=v_min, vmax=v_max)
 
-    im = ax.pcolormesh(d, -h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True)
+    im = ax.pcolormesh(d, -h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True, shading='auto')
     fig.colorbar(im, ax=ax)
+    ax.set_ylim([-200, 0])
     axs = ax.twinx()
     if 'cross_val_pred' in X.columns:  # training/cross-val
         y_pred = X['cross_val_pred']
@@ -210,10 +211,10 @@ def plot_2d_section(X: pd.DataFrame,
         ax.plot(X.d, -target, label='interpretation', linewidth=2, color='k')
 
     pred = savgol_filter(y_pred, 11, 3)  # window size 51, polynomial order 3
-    ax.plot(X.d, -pred, label='prediction', linewidth=2, color='r')
+    ax.plot(X.d, -pred, label='prediction', linewidth=2, color='c')
 
-    for c in col_names:
-        axs.plot(X.d, -X[c] if flip_column else X[c], label=c, linewidth=2, color='orange')
+    # for c in col_names:
+    #     axs.plot(X.d, -X[c] if flip_column else X[c], label=c, linewidth=2, color='red')
 
     ax.set_xlabel('distance along aem line (m)')
     ax.set_ylabel('depth (m)')
@@ -225,6 +226,7 @@ def plot_2d_section(X: pd.DataFrame,
     ax.legend()
     axs.legend()
     plt.show()
+    # plt.savefig(str(cluster_line_no) + ".jpg")
 
 
 def plot_conductivity(X: pd.DataFrame,
@@ -273,22 +275,27 @@ def plot_conductivity(X: pd.DataFrame,
     plt.show()
 
 
-def export_model(model, conf: Config, learn=True):
+def export_model(model, conf: Config, model_type: str = 'learn'):
+    if model_type not in {'learn', 'optimise'}:
+        raise AttributeError("Model type must be one of 'learn' or 'optimise'")
+    learned_model = model_type == 'learn'  # as opposed to optimised_model
+    model_file = conf.model_file if learned_model else conf.optimised_model_file
     state_dict = {"model": model, "config": conf}
-    model_file = conf.optimised_model_file if (conf.optimised_model and not learn) else conf.model_file
     with open(model_file, 'wb') as f:
         joblib.dump(state_dict, f)
         log.info(f"Wrote model on disc {model_file}")
 
 
-def import_model(conf: Config, learn=True):
-    model_file = conf.optimised_model_file if (conf.optimised_model and not learn) else conf.model_file
+def import_model(conf: Config, model_type: str = 'learn'):
+    learned_model = model_type == 'learn'  # as opposed to optimised_model
+    model_file = conf.model_file if learned_model else conf.optimised_model_file
     if not model_file.exists():
         raise FileExistsError(f"Model file {model_file.as_posix()} does not exist. Train or optimise model first!!")
     with open(model_file, 'rb') as f:
         state_dict = joblib.load(f)
         log.info(f"loaded trained model from location {conf.model_file}")
-    return state_dict
+    model, conf = state_dict["model"], state_dict['config']
+    return model, conf
 
 
 def plot_cond_mesh(X, conf):

@@ -69,7 +69,7 @@ def learn(config: str) -> None:
     log.info("Fit final model with all training data")
     model.fit(X[model_cols], y, sample_weight=w)
 
-    utils.export_model(model, conf, learn=True)
+    utils.export_model(model, conf, model_type='learn')
 
     X = add_pred_to_data(X, conf, model)
     X['target'] = y
@@ -88,6 +88,7 @@ def optimise(config: str) -> None:
 
     groups = X[cluster_line_segment_id]
     model = training.bayesian_optimisation(X, y, w, groups, conf)
+    utils.export_model(model, conf, model_type='optimise')
 
     X = add_pred_to_data(X, conf, model)
     X['target'] = y
@@ -102,15 +103,46 @@ def optimise(config: str) -> None:
               help="The model configuration file")
 @click.option('--model-type', required=True,
               type=click.Choice(['learn', 'optimised'], case_sensitive=False))
+def validate(config: str, model_type: str) -> None:
+    """validate an oos shapefile using a model saved on disc."""
+    conf = Config(config)
+    conf.oos_validation = True
+    model, _ = import_model(conf, model_type)
+
+    X, y, w = load_data(conf=conf)
+    X['target'] = y
+    X['weights'] = w
+    X = add_pred_to_data(X, conf, model, oos=True)
+    log.info(f"Finished predicting {conf.algorithm} model")
+    predictions = X['oos_pred']
+    scores = {v.__name__: v(y_true=y, y_pred=predictions, sample_weight=w) for v in regression_metrics}
+    log.info(f"Finished {conf.algorithm} oos validation")
+
+    # report model performance on screen
+    score_string = "Model scores: \n"
+    for k, v in scores.items():
+        if isinstance(v, np.ndarray):
+            scores[k] = v.tolist()
+        score_string += "{}\t= {}\n".format(k, v)
+
+    log.info(score_string)
+    # and also save a scores json file on disc
+    with open(conf.oos_validation_scores, 'w') as f:
+        json.dump(scores, f, sort_keys=True, indent=4)
+
+    X.to_csv(conf.oos_data, index=False)
+    log.info(f"Saved oos data and target and oos predictions at {conf.oos_data}")
+
+
+@main.command()
+@click.option("-c", "--config", type=click.Path(exists=True), required=True,
+              help="The model configuration file")
+@click.option('--model-type', required=True,
+              type=click.Choice(['learn', 'optimised'], case_sensitive=False))
 def predict(config: str, model_type: str) -> None:
     """Predict using a model saved on disc."""
     conf = Config(config)
-    optimised_model = model_type == 'learn'
-    state_dict = import_model(conf, learn=optimised_model)
-    model = state_dict["model"]
-
-    model_file = conf.optimised_model_file if (conf.optimised_model and not learn) else conf.model_file
-    log.info(f"Predicting using trained model file found in location {model_file}")
+    model, _ = import_model(conf, model_type)
 
     pred_aem_data = load_covariates(is_train=False, conf=conf)
 
@@ -124,5 +156,3 @@ def predict(config: str, model_type: str) -> None:
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
-
-    import IPython; IPython.embed(); import sys; sys.exit()
