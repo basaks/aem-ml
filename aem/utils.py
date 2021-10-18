@@ -167,7 +167,8 @@ def plot_2d_section(X: pd.DataFrame,
                     col_names: Union[str, List[str]] = [],
                     log_conductivity=False,
                     slope=False,
-                    flip_column=False, v_min=0.3, v_max=0.8):
+                    flip_column=False, v_min=0.3, v_max=0.8,
+                    topographic_drape=True):
     if isinstance(col_names, str):
         col_names = [col_names]
 
@@ -187,6 +188,10 @@ def plot_2d_section(X: pd.DataFrame,
         Z = np.log10(Z)
 
     h = X[conf.thickness_cols]
+    h = h.mul(-1)
+    elevation = X['elevation'] if topographic_drape else 0
+    elevation_stack = np.repeat(np.atleast_2d(elevation).T, h.shape[1], axis=1)
+    h = h.add(elevation_stack)
     dd = X.d
     ddd = np.atleast_2d(dd).T
     d = np.repeat(ddd, h.shape[1], axis=1)
@@ -198,9 +203,9 @@ def plot_2d_section(X: pd.DataFrame,
     else:
         norm = Normalize(vmin=v_min, vmax=v_max)
 
-    im = ax.pcolormesh(d, -h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True, shading='auto')
+    im = ax.pcolormesh(d, h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True, shading='auto')
     fig.colorbar(im, ax=ax)
-    ax.set_ylim([-200, 0])
+    # ax.set_ylim([-200, 0])
     axs = ax.twinx()
     if 'cross_val_pred' in X.columns:  # training/cross-val
         y_pred = X['cross_val_pred']
@@ -210,10 +215,10 @@ def plot_2d_section(X: pd.DataFrame,
         y_pred = X['pred']
     if 'target' in X.columns:
         target = X['target']
-        ax.plot(X.d, -target, label='interpretation', linewidth=2, color='k')
+        ax.plot(X.d, elevation - target, label='interpretation', linewidth=2, color='k')
 
     pred = savgol_filter(y_pred, 11, 3)  # window size 51, polynomial order 3
-    ax.plot(X.d, -pred, label='prediction', linewidth=2, color='c')
+    ax.plot(X.d, elevation - pred, label='prediction', linewidth=2, color='c')
 
     for c in col_names:
         axs.plot(X.d, -X[c] if flip_column else X[c], label=c, linewidth=2, color='red')
@@ -227,8 +232,8 @@ def plot_2d_section(X: pd.DataFrame,
 
     ax.legend()
     axs.legend()
-    # plt.show()
-    plt.savefig(str(cluster_line_no) + ".jpg")
+    plt.show()
+    # plt.savefig(str(cluster_line_no) + ".jpg")
 
 
 def plot_conductivity(X: pd.DataFrame,
