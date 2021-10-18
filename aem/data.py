@@ -37,9 +37,15 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
     # lines = np.unique(line_no)
     scatter = plt.scatter(_X.iloc[:, 0], _X.iloc[:, 1], s=10, c=colors[line_no], cmap=colors)
     # plt.legend(handles=scatter.legend_elements()[0], labels=list(np.unique(lines)))
-    fig_file = conf.aem_lines_plot_train if is_train else conf.aem_lines_plot_pred
-    plt.savefig(fig_file)
+    if is_train:
+        if conf.oos_validation:
+            fig_file = conf.aem_lines_plot_oos
+        else:
+            fig_file = conf.aem_lines_plot_train
+    else:
+        fig_file = conf.aem_lines_plot_pred
 
+    plt.savefig(fig_file)
     aem_data[cluster_line_no] = line_no
 
     aem_data = aem_data.groupby(cluster_line_no).apply(utils.add_delta, conf=conf)
@@ -77,15 +83,15 @@ def load_data(conf: Config):
 
     aem_xy_and_other_covs = utils.prepare_aem_data(conf, original_aem_data)[utils.select_required_data_cols(conf)]
     smooth = '_smooth_' if conf.smooth_twod_covariates else '_'
-    # data_path = f'covariates_targets_2d{smooth}weights.data'
-    data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
-    # if not Path(data_path).exists():
-    #     data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
-    #     log.info("saving data on disc for future use")
-    #     joblib.dump(data, open(data_path, 'wb'))
-    # else:
-    #     log.warning("Reusing data from disc!!!")
-    #     data = joblib.load(open(data_path, 'rb'))
+    data_path = f'covariates_targets_2d{smooth}weights.data'
+    if (not Path(data_path).exists()) or conf.oos_validation:
+        data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
+        log.info("saving data on disc for future use")
+        if not conf.oos_validation:  # only during training
+            joblib.dump(data, open(data_path, 'wb'))
+    else:
+        log.warning("Reusing data from disc!!!")
+        data = joblib.load(open(data_path, 'rb'))
 
     X = data['covariates']
     y = data['targets']

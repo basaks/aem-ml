@@ -30,6 +30,11 @@ data:
         val: 0.2
         test: 0.2
     rows: -1
+    oos_validation:
+        aem_validation_data:
+            - 'oss.shp'
+        targets:
+            - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
 
 learning:
     algorithm: quantilegb

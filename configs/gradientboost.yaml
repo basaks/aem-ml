@@ -65,7 +65,7 @@ learning:
     smooth_covariates_kernel_size: (51, 3)
     optimisation:
         searchcv_params:
-            n_iter: 60
+            n_iter: 6
             cv: 5
             verbose: 1000
             n_points: 10

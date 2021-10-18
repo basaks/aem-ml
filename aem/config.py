@@ -113,6 +113,7 @@ class Config:
         self.oos_data = Path(self.output_dir).joinpath(self.name + "_oos.csv")
         self.quantiles = s['output']['pred']['quantiles']
         self.aem_lines_plot_train = Path(self.output_dir).joinpath('aem_survey_lines_train.jpg')
+        self.aem_lines_plot_oos = Path(self.output_dir).joinpath('aem_survey_lines_oos.jpg')
         self.aem_lines_plot_pred = Path(self.output_dir).joinpath('aem_survey_lines_pred.jpg')
         self.train_scatter_plot = Path(self.output_dir).joinpath('train_scatter.jpg')
 

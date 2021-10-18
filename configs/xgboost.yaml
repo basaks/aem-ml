@@ -2,12 +2,12 @@ data:
     aem_folder: 'aem_data'
     train_data:
         aem_train_data:
-            - 'high_res_cond_clip_albers_skip_6.shp'
+            - 'train.shp'
         targets:
             - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
         weights:
             - 1
-    apply_model: 'oss.shp'
+    apply_model: 'oss.shp'  # this is for prediction on uninterpreted data
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
@@ -30,6 +30,11 @@ data:
         val: 0.2
         test: 0.2
     rows: -1
+    oos_validation:
+        aem_validation_data:
+            - 'oss.shp'
+        targets:
+            - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
 
 # will run n_iter * cv number of jobs
 # n_iter: Number of parameter settings that are sampled.
@@ -59,7 +64,7 @@ learning:
         subsample: 1.0
         n_jobs: -1
     cross_validation:
-        kfold: 3
+        kfold: 5
     weighted_model:
         weights:
             H: 2

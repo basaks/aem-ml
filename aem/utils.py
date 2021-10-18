@@ -204,6 +204,8 @@ def plot_2d_section(X: pd.DataFrame,
     axs = ax.twinx()
     if 'cross_val_pred' in X.columns:  # training/cross-val
         y_pred = X['cross_val_pred']
+    elif 'oos_pred' in X.columns:
+        y_pred = X['oos_pred']
     else:  # prediction
         y_pred = X['pred']
     if 'target' in X.columns:
@@ -213,8 +215,8 @@ def plot_2d_section(X: pd.DataFrame,
     pred = savgol_filter(y_pred, 11, 3)  # window size 51, polynomial order 3
     ax.plot(X.d, -pred, label='prediction', linewidth=2, color='c')
 
-    # for c in col_names:
-    #     axs.plot(X.d, -X[c] if flip_column else X[c], label=c, linewidth=2, color='red')
+    for c in col_names:
+        axs.plot(X.d, -X[c] if flip_column else X[c], label=c, linewidth=2, color='red')
 
     ax.set_xlabel('distance along aem line (m)')
     ax.set_ylabel('depth (m)')
@@ -225,8 +227,8 @@ def plot_2d_section(X: pd.DataFrame,
 
     ax.legend()
     axs.legend()
-    plt.show()
-    # plt.savefig(str(cluster_line_no) + ".jpg")
+    # plt.show()
+    plt.savefig(str(cluster_line_no) + ".jpg")
 
 
 def plot_conductivity(X: pd.DataFrame,

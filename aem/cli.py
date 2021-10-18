@@ -1,5 +1,6 @@
 """Console script for aem."""
 import sys
+from enum import Enum
 import click
 import json
 import numpy as np
