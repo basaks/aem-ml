@@ -164,11 +164,13 @@ def add_delta(line: pd.DataFrame, conf: Config, origin=None):
 def plot_2d_section(X: pd.DataFrame,
                     cluster_line_no,
                     conf: Config,
-                    col_names: Union[str, List[str]] = [],
+                    col_names: Optional[Union[str, List[str]]] = None,
                     log_conductivity=False,
                     slope=False,
                     flip_column=False, v_min=0.3, v_max=0.8,
                     topographic_drape=True):
+    if col_names is None:
+        col_names = []
     if isinstance(col_names, str):
         col_names = [col_names]
 
@@ -232,8 +234,8 @@ def plot_2d_section(X: pd.DataFrame,
 
     ax.legend()
     axs.legend()
-    plt.show()
-    # plt.savefig(str(cluster_line_no) + ".jpg")
+    # plt.show()
+    plt.savefig(str(cluster_line_no) + ".jpg")
 
 
 def plot_conductivity(X: pd.DataFrame,
