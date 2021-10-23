@@ -7,7 +7,7 @@ data:
             - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
         weights:
             - 1
-    apply_model: 'oss.shp'  # this is for prediction on uninterpreted data
+    apply_model: 'oos.shp'  # this is for prediction on uninterpreted data
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
@@ -32,7 +32,7 @@ data:
     rows: -1
     oos_validation:
         aem_validation_data:
-            - 'oss.shp'
+            - 'oos.shp'
         targets:
             - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
 

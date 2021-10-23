@@ -13,6 +13,9 @@ from aem.logger import aemlogger as log
 
 def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: bool, conf: Config) -> pd.DataFrame:
     """
+    Accepts aem covariates with 'POINT_X', 'POINT_Y as coordinates and assigns a cluster number to each row of
+    covariates/observations. These
+
     :param is_train: train or predict
     :param aem_data: aem training data
     :param conf: Config instance
@@ -55,6 +58,11 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
 
 
 def load_data(conf: Config):
+    """
+    Loads covariates specified in the config file
+    :param conf:
+    :return:
+    """
     original_aem_data = load_covariates(is_train=True, conf=conf)
     if conf.oos_validation:
         print(conf.oos_interp_data)

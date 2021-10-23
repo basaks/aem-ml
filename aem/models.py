@@ -124,12 +124,20 @@ class QuantileXGB(BaseEstimator, RegressorMixin):
 
 
 class QuantileGradientBoosting(BaseEstimator, RegressorMixin):
+    """
+    Bespoke Quantile Gradient Boosting Regression implementation.
+    """
     def __init__(
         self,
         mean_model_params,
         upper_quantile_params,
         lower_quantile_params
     ):
+        """
+        :param mean_model_params:
+        :param upper_quantile_params:
+        :param lower_quantile_params:
+        """
         self.mean_model_params = mean_model_params
         self.upper_quantile_params = upper_quantile_params
         self.lower_quantile_params = lower_quantile_params

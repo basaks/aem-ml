@@ -37,7 +37,11 @@ regression_metrics = {
 @click.option("-c", "--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
 def learn(config: str) -> None:
-    """Train a model specified by a config file."""
+    """
+    Train and saves the model file specified by a config file.
+    :param config:  Config class instance
+    """
+
     log.info(f"Training Model using config {config}")
     conf = Config(config)
     np.random.seed(conf.numpy_seed)

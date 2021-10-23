@@ -235,7 +235,7 @@ def plot_2d_section(X: pd.DataFrame,
     ax.legend()
     axs.legend()
     # plt.show()
-    plt.savefig(str(cluster_line_no) + ".jpg")
+    # plt.savefig(str(cluster_line_no) + ".jpg")
 
 
 def plot_conductivity(X: pd.DataFrame,

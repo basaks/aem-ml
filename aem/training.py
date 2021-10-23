@@ -13,6 +13,8 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from skopt import BayesSearchCV
 from skopt.space import Real, Integer, Categorical
+from hyperopt import fmin, tpe, anneal, Trials, space_eval
+from hyperopt.hp import uniform, randint, choice, loguniform, quniform
 
 from aem import utils
 from aem.config import Config, cluster_line_segment_id, cluster_line_no
