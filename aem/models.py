@@ -9,6 +9,12 @@ from aem.logger import aemlogger as log
 
 
 class XGBQuantileRegressor(XGBRegressor):
+    """
+    XGBoost is a fast and high performance library for gradient boosting libraries. It is a
+    supervised learning algorithm which will attempt to predict a target variable by combining
+    estimates of simpler models. This coupled with a bespoke quantile regressor will help us
+    understand the relationship between variables outside the means of the data
+    """
     def __init__(self,
                  alpha, delta, thresh, variance,
                  **kwargs
@@ -125,7 +131,9 @@ class QuantileXGB(BaseEstimator, RegressorMixin):
 
 class QuantileGradientBoosting(BaseEstimator, RegressorMixin):
     """
-    Bespoke Quantile Gradient Boosting Regression implementation.
+    Bespoke Quantile Gradient Boosting Regression implementation through the production of
+    an ensemble of weak prediction models (usually decision trees) which combine together
+    to minimise the overall prediction error.
     """
     def __init__(
         self,
@@ -134,9 +142,9 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin):
         lower_quantile_params
     ):
         """
-        :param mean_model_params:
-        :param upper_quantile_params:
-        :param lower_quantile_params:
+        :param mean_model_params: parameters for the mean model to be input in the QGB class
+        :param upper_quantile_params: upper quantile parameters
+        :param lower_quantile_params: lower quantile parameters
         """
         self.mean_model_params = mean_model_params
         self.upper_quantile_params = upper_quantile_params
