@@ -18,8 +18,8 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
 
     :param is_train: train or predict
     :param aem_data: aem training data
-    :param conf: Config instance
-    :return: aem_data with line_no added based on
+    :param conf: Config instance class defined by user
+    :return: aem_data with line_no added based on the training of data
     """
     log.info("Segmenting aem lines using DBSCAN clustering algorithm")
     from matplotlib.colors import ListedColormap
@@ -59,8 +59,13 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
 
 def load_data(conf: Config):
     """
-    Loads covariates specified in the config file
+    Loads covariates specified in the config file and applies the weights due to conf intervals
+    assigned by user on the interpretation of values and weights the due of the datasets themselves
     :param conf: Config class instance
+    :param train_weights: trains the weights set by the confidence intervals from data
+    :param all_interp_training_data: concats all the interpreted training datasets from the GeoDataframe
+    :param interp_data: created dataset wit all interpreted data in it
+    :param return: Returns X, y, w (Covariates, interpreted data and weights)
     """
     original_aem_data = load_covariates(is_train=True, conf=conf)
     if conf.oos_validation:
@@ -76,8 +81,6 @@ def load_data(conf: Config):
 
     train_weights = conf.train_data_weights
 
-    # apply the weights due to confidence levels assigned by the interpreter on the interpretation/target values
-    # plus the weights due to the datasets themselves
     if conf.weighted_model:
         for a, w in zip(all_interp_training_datasets, train_weights):
             a['weight'] = a[conf.weight_col].map(conf.weight_dict) * w
@@ -110,6 +113,11 @@ def load_data(conf: Config):
 
 
 def load_covariates(is_train: bool, conf: Config):
+    """
+    :param is_train: to train and predict data from the covariates
+    :param conf: confidence intervals
+    :return: Returns the AEM data as its run through the validation and scaling of the covariates set out by the user
+    """
     if conf.oos_validation:
         aem_files = conf.oos_validation_data if is_train else [conf.aem_pred_data]
     else:
