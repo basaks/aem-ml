@@ -2,7 +2,6 @@ import yaml
 from pathlib import Path
 import geopandas as gpd
 
-
 # column containing H, M, L categories corresponding to confidence levels of interpretation
 confidence_indicator_col = 'BoundConf'
 
@@ -24,6 +23,7 @@ class Config:
     yaml_file : string
         The path to the yaml config file.
     """
+
     def __init__(self, yaml_file):
         with open(yaml_file, 'r') as f:
             s = yaml.safe_load(f)
@@ -68,9 +68,21 @@ class Config:
         self.smooth_covariates_kernel_size = eval(s['learning']['smooth_covariates_kernel_size'])
 
         # model parameter optimisation
+        self.hpopt = False
+        self.skopt = False
         if 'optimisation' in s['learning']:
-            self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
-            self.opt_params_space = s['learning']['optimisation']['params_space']
+            if 'searchcv_params' in s['learning']['optimisation']:
+                self.opt_searchcv_params = s['learning']['optimisation']['searchcv_params']
+                self.opt_params_space = s['learning']['optimisation']['params_space']
+                self.skopt = True
+            if 'hyperopt_params' in s['learning']['optimisation']:
+                self.hyperopt_params = s['learning']['optimisation']['hyperopt_params']
+                self.hp_params_space = s['learning']['optimisation']['hp_params_space']
+                self.hpopt = True
+
+            if self.skopt and self.hpopt:
+                raise ConfigException("Only one of searchcv_params or hyperopt_params can be specified")
+
 
         # weighted model params
         if 'weighted_model' in s['learning']:
@@ -109,6 +121,7 @@ class Config:
         # outputs
         self.train_data = Path(self.output_dir).joinpath(self.name + "_train.csv")
         self.optimisation_data = Path(self.output_dir).joinpath(self.name + "_optimisation.csv")
+        self.optimisation_output_hpopt = Path(self.output_dir).joinpath(self.name + '_optimisation_hpopt.csv')
         self.pred_data = Path(self.output_dir).joinpath(self.name + "_pred.csv")
         self.oos_data = Path(self.output_dir).joinpath(self.name + "_oos.csv")
         self.quantiles = s['output']['pred']['quantiles']
@@ -121,3 +134,7 @@ class Config:
         self.train_fraction = s['data']['test_train_split']['train']
         self.test_fraction = s['data']['test_train_split']['test']
         self.val_fraction = s['data']['test_train_split']['val']
+
+
+class ConfigException(Exception):
+    pass

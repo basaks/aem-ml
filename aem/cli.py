@@ -12,7 +12,7 @@ from aem import utils
 from aem.data import load_data, load_covariates
 from aem.prediction import add_pred_to_data
 from aem.models import modelmaps
-from aem import training
+from aem import hpopt
 from aem.logger import configure_logging, aemlogger as log
 from aem.utils import import_model
 
@@ -49,12 +49,16 @@ def learn(config: str) -> None:
     X, y, w = load_data(conf)
     model = modelmaps[conf.algorithm](**conf.model_params)
     model_cols = utils.select_columns_for_model(conf)
+    from aem.training import setup_validation_data
+    random_state = conf.model_params['random_state']
+    X, y, groups, cv = setup_validation_data(X, y, groups=X[cluster_line_segment_id],
+                                             cv_folds=conf.cross_validation_folds, random_state=random_state)
 
     if conf.cross_validate:
         log.info(f"Running cross validation of {conf.algorithm} model with kfold {conf.cross_validation_folds}")
-        predictions = cross_val_predict(model, X[model_cols], y, groups=X['cluster_line_segment_id'],
+        predictions = cross_val_predict(model, X[model_cols], y, groups,
                                         fit_params={'sample_weight': w}, n_jobs=-1, verbose=1000,
-                                        cv=GroupKFold(conf.cross_validation_folds))
+                                        cv=cv)
         scores = {v.__name__: v(y_true=y, y_pred=predictions, sample_weight=w) for v in regression_metrics}
         log.info(f"Finished {conf.algorithm} cross validation")
 
@@ -92,7 +96,7 @@ def optimise(config: str) -> None:
     X, y, w = load_data(conf)
 
     groups = X[cluster_line_segment_id]
-    model = training.bayesian_optimisation(X, y, w, groups, conf)
+    model = hpopt.optimise_model(X, y, w, groups, conf)
     utils.export_model(model, conf, model_type='optimise')
 
     X = add_pred_to_data(X, conf, model)

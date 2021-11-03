@@ -1,6 +1,7 @@
 import json
 import joblib
 from typing import Dict
+import logging
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
@@ -10,7 +11,9 @@ from sklearn.metrics import (
     mean_squared_error,
     mean_absolute_error
 )
-from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split, GroupKFold, KFold
+from sklearn.utils import shuffle
 from skopt import BayesSearchCV
 from skopt.space import Real, Integer, Categorical
 from hyperopt import fmin, tpe, anneal, Trials, space_eval
@@ -20,7 +23,6 @@ from aem import utils
 from aem.config import Config, cluster_line_segment_id, cluster_line_no
 from aem.models import modelmaps
 from aem.logger import aemlogger as log
-
 
 # Make numpy printouts easier to read.
 np.set_printoptions(precision=3, suppress=True)
@@ -79,6 +81,20 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
     opt_model.fit(X[model_cols], y, sample_weight=w)
 
     return opt_model
+
+
+def setup_validation_data(X, y, groups, cv_folds, random_state=None):
+    le = LabelEncoder()
+    le.fit(groups)
+    le_groups = le.transform(groups)
+    X, y, le_groups = shuffle(X, y, le_groups, random_state=random_state)
+    if len(np.unique(groups)) >= cv_folds:
+        log.info(f'Using GroupKFold with {cv_folds} folds')
+        cv = GroupKFold(n_splits=cv_folds)
+    else:
+        log.info(f'Using KFold with {cv_folds} folds')
+        cv = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
+    return X, y, le_groups, cv
 
 
 def train_test_score(X: pd.DataFrame, y: pd.Series, w: pd.Series, conf: Config, model_params: Dict):
