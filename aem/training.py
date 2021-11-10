@@ -83,18 +83,18 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
     return opt_model
 
 
-def setup_validation_data(X, y, groups, cv_folds, random_state=None):
+def setup_validation_data(X, y, weights, groups, cv_folds, random_state=None):
     le = LabelEncoder()
     le.fit(groups)
     le_groups = le.transform(groups)
-    X, y, le_groups = shuffle(X, y, le_groups, random_state=random_state)
+    X, y, w, le_groups = shuffle(X, y, weights, le_groups, random_state=random_state)
     if len(np.unique(groups)) >= cv_folds:
         log.info(f'Using GroupKFold with {cv_folds} folds')
         cv = GroupKFold(n_splits=cv_folds)
     else:
         log.info(f'Using KFold with {cv_folds} folds')
         cv = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
-    return X, y, le_groups, cv
+    return X, y, w, le_groups, cv
 
 
 def train_test_score(X: pd.DataFrame, y: pd.Series, w: pd.Series, conf: Config, model_params: Dict):

@@ -50,7 +50,7 @@ def optimise_model(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: pd.Serie
 
     model_cols = utils.select_columns_for_model(conf)
 
-    X, y, le_groups, cv = setup_validation_data(X, y, groups, cv_folds, random_state)
+    X, y, w, le_groups, cv = setup_validation_data(X, y, w, groups, cv_folds, random_state)
 
     def objective(params, random_state=random_state, cv=cv, X=X[model_cols], y=y):
         # the function gets a set of variable parameters in "param"
@@ -68,7 +68,7 @@ def optimise_model(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: pd.Serie
         log.info(f"Cross-validating param combination:\n{params_str}")
         cv_results = cross_validate(model, X, y,
                                     fit_params={'sample_weight': w},
-                                    groups=groups, cv=cv, scoring={'score': scorer}, n_jobs=-1)
+                                    groups=le_groups, cv=cv, scoring={'score': scorer}, n_jobs=-1)
         score = 1 - cv_results['test_score'].mean()
         log.info(f"Loss: {score}")
         return score
@@ -108,6 +108,7 @@ def optimise_model(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: pd.Serie
 
     conf.optimised_model = True
     utils.export_model(opt_model, conf, model_type="optimise")
+    return opt_model
 
 
 def save_optimal(best, random_state, trials, objective, conf: Config):

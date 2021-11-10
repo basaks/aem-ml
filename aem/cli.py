@@ -1,6 +1,5 @@
 """Console script for aem."""
 import sys
-from enum import Enum
 import click
 import json
 import numpy as np
@@ -10,6 +9,7 @@ from aem import __version__
 from aem.config import Config, cluster_line_segment_id
 from aem import utils
 from aem.data import load_data, load_covariates
+from aem.training import setup_validation_data
 from aem.prediction import add_pred_to_data
 from aem.models import modelmaps
 from aem import hpopt
@@ -46,17 +46,21 @@ def learn(config: str) -> None:
     conf = Config(config)
     np.random.seed(conf.numpy_seed)
 
-    X, y, w = load_data(conf)
+    X, y, weights = load_data(conf)
     model = modelmaps[conf.algorithm](**conf.model_params)
     model_cols = utils.select_columns_for_model(conf)
-    from aem.training import setup_validation_data
     random_state = conf.model_params['random_state']
-    X, y, groups, cv = setup_validation_data(X, y, groups=X[cluster_line_segment_id],
-                                             cv_folds=conf.cross_validation_folds, random_state=random_state)
+    X, y, w, le_groups, cv = setup_validation_data(X, y, weights=weights, groups=X[cluster_line_segment_id],
+                                                   cv_folds=conf.cross_validation_folds, random_state=random_state)
 
     if conf.cross_validate:
         log.info(f"Running cross validation of {conf.algorithm} model with kfold {conf.cross_validation_folds}")
-        predictions = cross_val_predict(model, X[model_cols], y, groups,
+        # cv_results = cross_validate(model, X[model_cols], y,
+        #                             fit_params={'sample_weight': w},
+        #                             groups=le_groups, cv=cv, scoring={'score': }, n_jobs=-1)
+        # print("==" * 50)
+        # print(cv_results['test_score'].mean())
+        predictions = cross_val_predict(model, X[model_cols], y, le_groups,
                                         fit_params={'sample_weight': w}, n_jobs=-1, verbose=1000,
                                         cv=cv)
         scores = {v.__name__: v(y_true=y, y_pred=predictions, sample_weight=w) for v in regression_metrics}
@@ -73,7 +77,7 @@ def learn(config: str) -> None:
         # and also save a scores json file on disc
         with open(conf.outfile_scores, 'w') as f:
             json.dump(scores, f, sort_keys=True, indent=4)
-        X['cross_val_pred'] = predictions
+        X['cv_pred'] = predictions
 
     log.info("Fit final model with all training data")
     model.fit(X[model_cols], y, sample_weight=w)
@@ -95,8 +99,7 @@ def optimise(config: str) -> None:
     conf = Config(config)
     X, y, w = load_data(conf)
 
-    groups = X[cluster_line_segment_id]
-    model = hpopt.optimise_model(X, y, w, groups, conf)
+    model = hpopt.optimise_model(X, y, w, X[cluster_line_segment_id], conf)
     utils.export_model(model, conf, model_type='optimise')
 
     X = add_pred_to_data(X, conf, model)

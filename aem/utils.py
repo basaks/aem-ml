@@ -209,8 +209,8 @@ def plot_2d_section(X: pd.DataFrame,
     fig.colorbar(im, ax=ax)
     # ax.set_ylim([-200, 0])
     axs = ax.twinx()
-    if 'cross_val_pred' in X.columns:  # training/cross-val
-        y_pred = X['cross_val_pred']
+    if 'cv_pred' in X.columns:  # training/cross-val
+        y_pred = X['cv_pred']
     elif 'oos_pred' in X.columns:
         y_pred = X['oos_pred']
     else:  # prediction

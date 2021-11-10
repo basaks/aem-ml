@@ -50,22 +50,24 @@ data:
 learning:
     algorithm: xgboost
     params:
-        objective: 'reg:squarederror'
-        max_depth: 5
-        learning_rate: 0.23
-        n_estimators: 5
-        colsample_bynode: 0.8
-        colsample_bylevel: 1.0
-        colsample_bytree: 0.9
-        max_delta_step: 9
-        gamma: 0.5
-        reg_alpha: 57.96
-        reg_lambda: 10.0
-        subsample: 1.0
+        objective: reg:squarederror
+        max_depth: 8
+        learning_rate: 0.17419472963030241
+        n_estimators: 24
+        colsample_bynode: 0.5469102757224991
+        colsample_bylevel: 0.9793166601242764
+        colsample_bytree: 0.11576985253405572
+        max_delta_step: 15
+        gamma: 0.7739716978240518
+        reg_alpha: 2.857852261835614
+        reg_lambda: 7.925780530694022
+        subsample: 0.11757957586875012
         n_jobs: -1
         random_state: 3
+        booster: gbtree
+        min_child_weight: 3
     cross_validation:
-        kfold: 4
+        kfold: 3
     weighted_model:
         weights:
             H: 2
@@ -102,7 +104,7 @@ learning:
         hyperopt_params:
             max_evals: 5
             step: 2
-            cv: 2
+            cv: 3
             verbose: true
             random_state: 3
             scoring: r2  # r2, neg_mean_absolute_error, etc..see note above
