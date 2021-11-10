@@ -52,7 +52,7 @@ learning:
     params:
         criterion: 'mse'
         max_depth: 15
-        n_estimators: 300
+        n_estimators: 30
         min_samples_split: 2
         min_samples_leaf: 2
         min_weight_fraction_leaf: 0.0

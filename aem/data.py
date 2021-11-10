@@ -60,8 +60,7 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
 def load_data(conf: Config):
     """
     Loads covariates specified in the config file
-    :param conf:
-    :return:
+    :param conf: Config class instance
     """
     original_aem_data = load_covariates(is_train=True, conf=conf)
     if conf.oos_validation:

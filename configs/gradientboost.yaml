@@ -82,7 +82,7 @@ learning:
             'min_weight_fraction_leaf': Real(0.0, 0.5, prior='uniform')
 
 output:
-    directory: out
+    directory: out/gb/
     train:
         covariates_csv: true
         true_vs_pred: true
