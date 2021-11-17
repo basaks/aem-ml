@@ -123,12 +123,20 @@ def create_interp_data(conf: Config, input_interp_data, included_lines):
         included_lines = [included_lines]
     line = input_interp_data[(input_interp_data[conf.target_type_col].isin([conf.included_target_type_categories]))
                              & (input_interp_data[conf.line_col].isin(included_lines))]
+    line = __add_x_y(line)
     line = line.rename(columns={conf.target_col: 'Z_coor'})
     if weighted_model:
         line_required = line[threed_coords + ['weight']]
     else:
         line_required = line[threed_coords]
     return line_required
+
+
+def __add_x_y(line):
+    coords = np.array([(p.x, p.y) for p in line.geometry])
+    geom = pd.DataFrame(coords, columns=['POINT_X', 'POINT_Y'], index=line.index)
+    line = line.merge(geom, left_index=True, right_index=True)
+    return line
 
 
 def add_delta(line: pd.DataFrame, conf: Config, origin=None):
