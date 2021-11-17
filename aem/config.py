@@ -93,6 +93,9 @@ class Config:
             self.weighted_model = False
 
         # data description
+        self.target_col = s['data']['target_col']
+        self.target_type_col = s['data']['target_type_col']
+        self.included_target_type_categories = s['data']['included_target_type_categories']
         self.line_col = s['data']['line_col']
         self.conductivity_columns_prefix = s['data']['conductivity_columns_prefix']
         self.thickness_columns_prefix = s['data']['thickness_columns_prefix']

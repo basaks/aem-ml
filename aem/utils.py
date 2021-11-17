@@ -121,10 +121,9 @@ def create_interp_data(conf: Config, input_interp_data, included_lines):
     weighted_model = conf.weighted_model
     if not isinstance(included_lines, list):
         included_lines = [included_lines]
-    line = input_interp_data[(input_interp_data['Type'] != 'WITHIN_Cenozoic')
-                             & (input_interp_data['Type'] != 'BASE_Mesozoic_TOP_Paleozoic')
+    line = input_interp_data[(input_interp_data[conf.target_type_col].isin([conf.included_target_type_categories]))
                              & (input_interp_data[conf.line_col].isin(included_lines))]
-    line = line.rename(columns={'DEPTH': 'Z_coor'})
+    line = line.rename(columns={conf.target_col: 'Z_coor'})
     if weighted_model:
         line_required = line[threed_coords + ['weight']]
     else:
