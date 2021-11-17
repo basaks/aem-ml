@@ -32,7 +32,7 @@ class Config:
 
         # output dir
         self.output_dir = s['output']['directory']
-        Path(self.output_dir).mkdir(exist_ok=True)
+        Path(self.output_dir).mkdir(exist_ok=True, parents=True)
 
         # data
         self.aem_folder = s['data']['aem_folder']

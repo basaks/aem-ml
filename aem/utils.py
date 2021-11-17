@@ -138,7 +138,7 @@ def add_delta(line: pd.DataFrame, conf: Config, origin=None):
     :param origin: origin of flight line, if not provided assumed ot be the at the lowest y value
     :return:
     """
-    line = line.sort_values(by='POINT_Y', ascending=True)
+    line = line.sort_values(by=['POINT_X', 'POINT_Y'], ascending=[True, True])
     line_cols = list(line.columns)
     line['POINT_X_diff'] = line['POINT_X'].diff()
     line['POINT_Y_diff'] = line['POINT_Y'].diff()
@@ -152,7 +152,7 @@ def add_delta(line: pd.DataFrame, conf: Config, origin=None):
     line['d'] = line['delta'].cumsum()
     line = line.sort_values(by=['d'], ascending=True)  # must sort by distance from origin of flight line
     cluster_id = str(np.unique(line.cluster_line_no)[0]) + '_'
-    arrs = np.array_split(range(line.shape[0]), line.shape[0] // conf.aem_line_splits)
+    arrs = np.array_split(range(line.shape[0]), max(line.shape[0] // conf.aem_line_splits, 1))
     for i, a in enumerate(arrs):
         arrs[i] = np.ones_like(a) * i
     arr = np.concatenate(arrs).ravel().astype(str)

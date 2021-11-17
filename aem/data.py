@@ -111,8 +111,9 @@ def load_data(conf: Config):
 
 def load_covariates(is_train: bool, conf: Config):
     if conf.oos_validation:
-        aem_files = conf.oos_validation_data if is_train else [conf.aem_pred_data]
+        aem_files = conf.oos_validation_data
     else:
+        # either train or prediction
         aem_files = conf.aem_train_data if is_train else [conf.aem_pred_data]
 
     log.info(f"Processing covariates from {aem_files}....")
