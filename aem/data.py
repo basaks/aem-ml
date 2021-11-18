@@ -64,11 +64,9 @@ def load_data(conf: Config):
     """
     original_aem_data = load_covariates(is_train=True, conf=conf)
     if conf.oos_validation:
-        print(conf.oos_interp_data)
         all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in
                                         conf.oos_interp_data]
     else:
-        print(conf.oos_interp_data)
         all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in
                                         conf.interp_data]
 

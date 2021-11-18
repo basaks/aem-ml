@@ -23,7 +23,7 @@ def prepare_aem_data(conf: Config, aem_data: pd.DataFrame):
     :param include_conductivity_derivatives:
     :return:
     """
-    aem_data.sort_values(by=['POINT_Y'], ascending=False, inplace=True)
+    aem_data.sort_values(by=['POINT_X', 'POINT_Y'], ascending=False, inplace=True, ignore_index=True)
     if conf.smooth_twod_covariates:
         for line in np.unique(aem_data.cluster_line_no):
             row_loc = aem_data.index[aem_data.cluster_line_no == line]
