@@ -82,7 +82,7 @@ def load_data(conf: Config):
         for a, w in zip(all_interp_training_datasets, train_weights):
             a['weight'] = a[conf.weight_col].map(conf.weight_dict) * w
 
-    all_interp_training_data = pd.concat(all_interp_training_datasets, axis=0)
+    all_interp_training_data = pd.concat(all_interp_training_datasets, axis=0, ignore_index=True)
     # how many lines in interp data
     lines_in_data = np.unique(all_interp_training_data[conf.line_col])
 

@@ -121,7 +121,7 @@ def create_interp_data(conf: Config, input_interp_data, included_lines):
     weighted_model = conf.weighted_model
     if not isinstance(included_lines, list):
         included_lines = [included_lines]
-    line = input_interp_data[(input_interp_data[conf.target_type_col].isin([conf.included_target_type_categories]))
+    line = input_interp_data[(input_interp_data[conf.target_type_col].isin(conf.included_target_type_categories))
                              & (input_interp_data[conf.line_col].isin(included_lines))]
     line = __add_x_y(line)
     line = line.rename(columns={conf.target_col: 'Z_coor'})
