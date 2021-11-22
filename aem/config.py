@@ -125,7 +125,7 @@ class Config:
         self.train_data = Path(self.output_dir).joinpath(self.name + "_train.csv")
         self.optimisation_data = Path(self.output_dir).joinpath(self.name + "_optimisation.csv")
         self.optimisation_output_hpopt = Path(self.output_dir).joinpath(self.name + '_optimisation_hpopt.csv')
-        self.pred_data = Path(self.output_dir).joinpath(self.name + "_pred.csv")
+        self.pred_data = Path(self.output_dir).joinpath(self.name + f"_pred_{self.aem_pred_data.stem}.csv")
         self.oos_data = Path(self.output_dir).joinpath(self.name + "_oos.csv")
         self.quantiles = s['output']['pred']['quantiles']
         self.aem_lines_plot_train = Path(self.output_dir).joinpath('aem_survey_lines_train.jpg')

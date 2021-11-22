@@ -78,7 +78,7 @@ def optimise_model(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: pd.Serie
 
     log.info(f"Optimising params using Hyperopt {algo}")
 
-    for i in range(1, max_evals + 1, step):
+    for i in range(0, max_evals + 1, step):
         # fmin runs until the trials object has max_evals elements in it, so it can do evaluations in chunks like this
         best = fmin(
             objective, search_space,
@@ -89,11 +89,11 @@ def optimise_model(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: pd.Serie
             rstate=rstate
         )
         # each step 'best' will be the best trial so far
-        params_str = ''
-        best = space_eval(search_space, best)
-        for k, v in best.items():
-            params_str += f"{k}: {v}\n"
-        log.info(f"After {i + step} trials best config: \n {params_str}")
+        # params_str = ''
+        # best = space_eval(search_space, best)
+        # for k, v in best.items():
+        #     params_str += f"{k}: {v}\n"
+        log.info(f"Saving params after {i + step} trials best config: \n")
         # each step 'trials' will be updated to contain every result
         # you can save it to reload later in case of a crash, or you decide to kill the script
         pickle.dump(trials, open(Path(conf.output_dir).joinpath(f"hpopt_{i + step}.pkl"), "wb"))
