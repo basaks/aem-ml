@@ -2,27 +2,42 @@ data:
     aem_folder: 'aem_data'
     train_data:
         aem_train_data:
-            - 'train.shp'
+            - '/home/sudipta/Documents/nci/out_resampled/NT_1_albers.shp'
+            - '/home/sudipta/Documents/nci/out_resampled/QLD_1_albers.shp'
         targets:
-            - 'interpretation_zone53_albers_study_area_Ceno_depth.shp'
+            - '/home/sudipta/Documents/nci/interp/training_NT_albers_Ceno.shp'
+            - '/home/sudipta/Documents/nci/interp/training_QLD_albers_Ceno.shp'
         weights:
             - 1
+            - 2
     apply_model: 'oos.shp'  # this is for prediction on uninterpreted data
-    weight_col: 'BoundConf'
+    weight_col: 'confid'  # this is the weight column
+    target_col: 'DEPTH'
+    target_type_col: 'BOUNDARY_N'  # Type
+    included_target_type_categories:
+#        - 'BASE_Cenozoic_TOP_Mesozoic'
+#        - 'BASE_Cenozoic_TOP_Neoproterozoic'
+#        - 'BASE_Cenozoic_TOP_Paleozoic'
+#        - 'BASE_Cenozoic_TOP_Pre-Neoproterozoic'
+        - "CEN-B"
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
     thickness_columns_prefix: 'thick'
     aem_covariate_cols:
-        - 'ceno_euc_a'
-        - 'Gravity_la'
-        - 'national_W'
-        - 'relief_ele'
-        - 'relief_mrv'
-        - 'SagaWET9ce'
-        - 'elevation'
+        - 'relief4'
+        - 'mrf_pred'
+        - 'mrvtpLL_s'
+        - 'mvrtpLL_f'
+        - 'LOC_dis'
+        - 'gravity'
+        - 'dem'
+        - 'clim_linda'
+        - 'clim_alber'
+        - 'sagawet'
+        - 'ceno_euc'
         - 'tx_height'
     # aem line scan radius in meters - aem points are assumed to be on the same flight line under this radius
-    aem_line_scan_radius: 500
+    aem_line_scan_radius: 5000
     # aem lines are split into batches of aem_line_splits's to generate artificial splits
     aem_line_splits: 1000
     test_train_split:
@@ -70,9 +85,9 @@ learning:
         kfold: 3
     weighted_model:
         weights:
-            H: 2
-            M: 1
-            L: 0.5
+            3: 3
+            2: 2
+            1: 1
     numpy_seed: 10
     include_aem_covariates: true
     include_thickness: true
