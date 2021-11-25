@@ -202,7 +202,7 @@ def plot_2d_section(X: pd.DataFrame,
     from matplotlib.colors import LogNorm, Normalize, SymLogNorm, PowerNorm
     # from matplotlib.colors import Colormap
     X = X[X.cluster_line_no == cluster_line_no]
-    X = X.sort_values(by=['POINT_Y'])
+    X = determine_and_sort_by_dominant_line_direction(X)
     origin = (X.POINT_X.iat[0], X.POINT_Y.iat[0])
     if slope:
         Z = X[conf.conductivity_derivatives_cols]
