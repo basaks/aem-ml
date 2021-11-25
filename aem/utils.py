@@ -14,6 +14,17 @@ radius = 500
 dis_tol = 100  # meters, distance tolerance used`
 
 
+def determine_and_sort_by_dominant_line_direction(line_data):
+    x_max, x_min, y_max, y_min = extent_of_data(line_data)
+    if abs(x_max-x_min) > abs(y_max-y_min):
+        sort_by_col = 'POINT_X'
+    else:
+        sort_by_col = 'POINT_Y'
+    log.info(f"sorting line by {sort_by_col}")
+    line_data = line_data.sort_values(by=[sort_by_col], ascending=[True])
+    return line_data
+
+
 def prepare_aem_data(conf: Config, aem_data: pd.DataFrame):
     """
     :param conf:
@@ -23,12 +34,15 @@ def prepare_aem_data(conf: Config, aem_data: pd.DataFrame):
     :param include_conductivity_derivatives:
     :return:
     """
-    aem_data.sort_values(by=['POINT_X', 'POINT_Y'], ascending=False, inplace=True, ignore_index=True)
+    aem_data.reset_index(drop=True, inplace=True)
     if conf.smooth_twod_covariates:
         for line in np.unique(aem_data.cluster_line_no):
-            row_loc = aem_data.index[aem_data.cluster_line_no == line]
-            aem_line_data = aem_data[aem_data.cluster_line_no == line][conf.conductivity_cols]
-            aem_data.loc[row_loc, conf.conductivity_cols] = apply_twod_median_filter(conf, aem_line_data)
+            line_indices = aem_data.cluster_line_no == line
+            row_loc = aem_data.index[line_indices]
+            aem_line_data = aem_data[line_indices]
+            aem_data.loc[row_loc, :] = determine_and_sort_by_dominant_line_direction(aem_line_data)
+            aem_line_cond_data = aem_data[line_indices][conf.conductivity_cols]
+            aem_data.loc[row_loc, conf.conductivity_cols] = apply_twod_median_filter(conf, aem_line_cond_data)
 
     aem_data.loc[:, conf.thickness_cols] = aem_data[conf.thickness_cols].cumsum(axis=1)
     conductivity_copy = aem_data[conf.conductivity_cols].copy()
@@ -145,7 +159,7 @@ def add_delta(line: pd.DataFrame, conf: Config, origin=None):
     :param origin: origin of flight line, if not provided assumed ot be the at the lowest y value
     :return:
     """
-    line = line.sort_values(by=['POINT_X', 'POINT_Y'], ascending=[True, True])
+    line = determine_and_sort_by_dominant_line_direction(line)
     line_cols = list(line.columns)
     line['POINT_X_diff'] = line['POINT_X'].diff()
     line['POINT_Y_diff'] = line['POINT_Y'].diff()
@@ -175,7 +189,9 @@ def plot_2d_section(X: pd.DataFrame,
                     log_conductivity=False,
                     slope=False,
                     flip_column=False, v_min=0.3, v_max=0.8,
-                    topographic_drape=True):
+                    topographic_drape=True,
+                    sort_vertically=True,
+                    ):
     if col_names is None:
         col_names = []
     if isinstance(col_names, str):
@@ -186,6 +202,7 @@ def plot_2d_section(X: pd.DataFrame,
     from matplotlib.colors import LogNorm, Normalize, SymLogNorm, PowerNorm
     # from matplotlib.colors import Colormap
     X = X[X.cluster_line_no == cluster_line_no]
+    X = X.sort_values(by=['POINT_Y'])
     origin = (X.POINT_X.iat[0], X.POINT_Y.iat[0])
     if slope:
         Z = X[conf.conductivity_derivatives_cols]
@@ -198,7 +215,7 @@ def plot_2d_section(X: pd.DataFrame,
 
     h = X[conf.thickness_cols]
     h = h.mul(-1)
-    elevation = X['elevation'] if topographic_drape else 0
+    elevation = X['dem'] if topographic_drape else 0
     elevation_stack = np.repeat(np.atleast_2d(elevation).T, h.shape[1], axis=1)
     h = h.add(elevation_stack)
     dd = X.d

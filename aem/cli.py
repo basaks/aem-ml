@@ -54,7 +54,8 @@ def learn(config: str) -> None:
                                                    cv_folds=conf.cross_validation_folds, random_state=random_state)
 
     if conf.cross_validate:
-        log.info(f"Running cross validation of {conf.algorithm} model with kfold {conf.cross_validation_folds}")
+        log.info(f"Running cross validation of {conf.algorithm} model with {cv.__class__.__name__} using"
+                 f" {conf.cross_validation_folds} folds")
         # cv_results = cross_validate(model, X[model_cols], y,
         #                             fit_params={'sample_weight': w},
         #                             groups=le_groups, cv=cv, scoring={'score': }, n_jobs=-1)
