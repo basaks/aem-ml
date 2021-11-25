@@ -3,7 +3,7 @@ import sys
 import click
 import json
 import numpy as np
-from sklearn.model_selection import cross_validate, GroupKFold, cross_val_predict
+from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import r2_score, explained_variance_score, mean_squared_error, mean_absolute_error
 from aem import __version__
 from aem.config import Config, cluster_line_segment_id

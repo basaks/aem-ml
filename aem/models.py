@@ -5,6 +5,7 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.base import BaseEstimator
 from sklearn.base import RegressorMixin
 from xgboost.sklearn import XGBRegressor
+from catboost import CatBoostRegressor
 from aem.logger import aemlogger as log
 
 
@@ -196,10 +197,32 @@ class QuantileRandomForestRegressor(RandomForestRegressor):
         return Ey, Vy, ql, qu
 
 
+class CatBoostWrapper(CatBoostRegressor):
+
+    def __init__(self,  **kwargs):
+        if 'loss_function' in kwargs:
+            kwargs.pop('loss_function')
+        super(CatBoostWrapper, self).__init__(**kwargs, loss_function='RMSEWithUncertainty')
+
+    def fit(self, X, *args, **kwargs):
+        super().fit(X, *args, **kwargs)
+
+    def predict(self, X, *args, **kwargs):
+        return self.predict_dist(X, *args, **kwargs)[0]
+
+    def predict_dist(self, X, interval=0.95, **kwargs):
+        pred = super().predict(X, **kwargs)
+        Ey = pred[:, 0]
+        Vy = pred[:, 1]
+        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+        return Ey, Vy, ql, qu
+
+
 modelmaps = {
     'xgboost': XGBRegressor,
     'gradientboost': GradientBoostingRegressor,
     'quantilegb': QuantileGradientBoosting,
     'randomforest': QuantileRandomForestRegressor,
     'quantilexgb': QuantileXGB,
+    'catboost': CatBoostWrapper,
 }
