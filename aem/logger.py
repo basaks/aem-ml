@@ -9,10 +9,12 @@ def configure_logging(verbosity):
     ch.setFormatter(ElapsedFormatter())
 
     aemlogger.addHandler(ch)
+    """
+    configures the logging of the verbosity file and the formatter is set
+    """
 
 
 class ElapsedFormatter(logging.Formatter):
-    """Format logging message to include elapsed time."""
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: A003
         """Format incoming message."""
@@ -22,3 +24,8 @@ class ElapsedFormatter(logging.Formatter):
         msg = record.getMessage()
         logstr = "+{}s {}:{} {}".format(t, name, lvl, msg)
         return logstr
+
+    """
+    The logging message is formatted to include the elasped time taken for the
+    logging process
+    """
