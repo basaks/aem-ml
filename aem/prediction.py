@@ -23,3 +23,9 @@ def add_pred_to_data(X: pd.DataFrame, conf: Config, model, oos: bool = False) ->
     X = pd.concat((X, pred), axis=1)
 
     return X
+"""
+Defines the addition of prediction data to the dataframe with the configs, models and oos defined
+in the aem file. Adds new columns; pred, variance, lower_quantile and upper_quantile to the new
+pred dataframe from an index. Logging info is output to the user with the relevant message being
+output. The new datafram is the concatted.
+"""
