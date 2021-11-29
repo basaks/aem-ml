@@ -33,6 +33,10 @@ class Config:
         # output dir
         self.output_dir = s['output']['directory']
         Path(self.output_dir).mkdir(exist_ok=True)
+        """
+        Initialises the YAML file which has been defined beforehand and is safely loaded from a selected filepath
+        and givens an output of the directory if it exists
+        """
 
         # data
         self.aem_folder = s['data']['aem_folder']
@@ -43,12 +47,24 @@ class Config:
         self.shapefile_rows = s['data']['rows']
         self.aem_line_dbscan_eps = s['data']['aem_line_scan_radius']
         self.aem_line_splits = s['data']['aem_line_splits']
+        """
+        Loads and joins the data from the aem folder into the path for the training data and targets whilst
+        initialising the weighting of the training data. Initialises the path for the prediction data after
+        the training data is joined to the path as well as creates a shapefile with the data with the radius
+        line splits
+        """
+
         # oos_validation
         self.oos_validation = False
         self.oos_validation_data = [Path(self.aem_folder).joinpath(p)
                                     for p in s['data']['oos_validation']['aem_validation_data']]
         self.oos_interp_data = [Path(self.aem_folder).joinpath(p)
                                 for p in s['data']['oos_validation']['targets']]
+
+        """
+        The validation of the oos shapefile is started and the validation data is added to the path in the aem
+        folder; the interpolated data is also added to the aem filepath and the oos validation is completed
+        """
 
         # np randomisation
         self.numpy_seed = s['learning']['numpy_seed']
@@ -79,6 +95,17 @@ class Config:
             self.weight_col = s['data']['weight_col']
         else:
             self.weighted_model = False
+       """
+       The data is randomised and cross validation through kfolds if possible, if it is not then the
+       covariates and conductivity is drawn from the aem file and the output is push through the covariate
+       with the smooth_covariates_kernel_size parameter
+
+       The optimisation process starts with the learning parameter set in the randomisation phase and is
+       applied acorss the model in its params_space
+
+       The model is then weighted through the learning and weights parameters and the data is fed through
+       said model
+       """
 
         # data description
         self.line_col = s['data']['line_col']
@@ -106,6 +133,12 @@ class Config:
         self.oos_validation_scores = Path(self.output_dir).joinpath(self.name + "_oos_validation_scores.json")
         self.optimised_model_scores = Path(self.output_dir).joinpath(self.name + "_searchcv_scores.json")
 
+        """
+        The model data is fit into a dataframe with the original data from the Geopandas Datafram with new
+        columns added and the data is then added to the filepath with the validation scores and optimised
+        model scores
+        """
+
         # outputs
         self.train_data = Path(self.output_dir).joinpath(self.name + "_train.csv")
         self.optimisation_data = Path(self.output_dir).joinpath(self.name + "_optimisation.csv")
@@ -121,3 +154,10 @@ class Config:
         self.train_fraction = s['data']['test_train_split']['train']
         self.test_fraction = s['data']['test_train_split']['test']
         self.val_fraction = s['data']['test_train_split']['val']
+
+        """
+        The training, optimisation, prediction and oos data is all output as .csv and jpg files and then
+        joined to the path (output_dir); with the train, test, val splits all being outlined in the end
+        """
+
+
