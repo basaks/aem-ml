@@ -48,6 +48,12 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
     )
     log.info(f"Optimising params using BayesSearchCV .....")
     model_cols = utils.select_columns_for_model(conf)
+    """
+    Defines the bayesian_optimisation with the X, y and w datagrams with configuration set by user
+    from the aem file. Searches the spaces and evaluates for v in k through the space items. Fits
+    the sample weight to the parameters and returns train score without refitting the data. Gives
+    an output message for the user
+    """
 
     searchcv.fit(X[model_cols], y, groups=groups)
 
@@ -80,6 +86,12 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
 
     return opt_model
 
+    """
+    Saves the best score found by BayesSearchCV and scores a new optimised model with a score with the parameters
+    X, y, w and saves the model scores in a json file. After the scores are saved the model is now trained using
+    a conf.algorithm and then with with the model name, pred and sample weight
+    """
+
 
 def train_test_score(X: pd.DataFrame, y: pd.Series, w: pd.Series, conf: Config, model_params: Dict):
     model = modelmaps[conf.algorithm](** model_params)
@@ -96,6 +108,11 @@ def train_test_score(X: pd.DataFrame, y: pd.Series, w: pd.Series, conf: Config, 
     all_scores = {'train_score': train_scores, 'test_score': test_scores}
     return all_scores
 
+    """
+    Defines a train_test_score with the columns of models with the x, y and w train and test values and
+    fits the model with columns separating the scores for the train, test and all
+    """
+
 
 def create_train_test_set_based_on_column(X, y, w, col_name):
     aem_segments = np.unique(X[col_name])
@@ -105,7 +122,10 @@ def create_train_test_set_based_on_column(X, y, w, col_name):
     X_train, y_train, w_train = X.loc[train_indices, :], y.loc[train_indices], w.loc[train_indices]
     X_test, y_test, w_test = X.loc[test_indices, :], y.loc[test_indices], y.loc[test_indices]
     return X_test, X_train, w_test, w_train, y_test, y_train
-
+    """
+    Creates a new set based on the columns of X, y, w after splitting data into segments and indices and
+    then locating the new X, y and w train and test parameters across the indicies
+    """
 
 def score_model(trained_model, X, y, w=None):
     scores = {}
@@ -113,3 +133,6 @@ def score_model(trained_model, X, y, w=None):
     for k, m in regression_metrics.items():
         scores[k] = m(y, y_pred, w)
     return scores
+    """
+    Defines and returns the scores of selected models vai the y, y_pred and w metrics
+    """
