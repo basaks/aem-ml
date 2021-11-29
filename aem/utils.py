@@ -16,12 +16,12 @@ dis_tol = 100  # meters, distance tolerance used`
 
 def prepare_aem_data(conf: Config, aem_data: pd.DataFrame):
     """
-    :param conf:
-    :param in_scope_aem_data:
-    :param interp_data: dataframe with
-    :param include_thickness:
-    :param include_conductivity_derivatives:
-    :return:
+    :param conf: set by the user from the aem file
+    :param in_scope_aem_data: data from the aem file
+    :param interp_data: dataframe with interpolated data
+    :param include_thickness: thickness_cols pre defined by the user
+    :param include_conductivity_derivatives: conductivity_derivatives_cols predefined by the user
+    :return: returns the aem data with the conductivity columns and derivaties in place
     """
     aem_data.sort_values(by=['POINT_Y'], ascending=False, inplace=True)
     if conf.smooth_twod_covariates:
@@ -48,6 +48,7 @@ def apply_twod_median_filter(conf: Config, aem_conductivities: pd.DataFrame):
     return df
 
 
+
 def select_required_data_cols(conf: Config):
     cols = select_columns_for_model(conf)[:]
     return cols + twod_coords + additional_cols_for_tracking
@@ -63,12 +64,20 @@ def select_columns_for_model(conf: Config):
         cols += conf.thickness_cols
 
     return cols
+    """
+    Selects the columns for the model based on the presence of covariate and conductivity derivatives data
+    found in rows
+    """
 
 
 def extent_of_data(data: pd.DataFrame) -> Tuple[float, float, float, float]:
     x_min, x_max = min(data['POINT_X']), max(data['POINT_X'])
     y_min, y_max = min(data['POINT_Y']), max(data['POINT_Y'])
     return x_max, x_min, y_max, y_min
+    """
+    Defines the extent of the data through the use of x and y min/max function to display the range across
+    the dataset
+    """
 
 
 def weighted_target(line_required: pd.DataFrame, tree: KDTree, x: np.ndarray, weighted_model):
@@ -86,6 +95,10 @@ def weighted_target(line_required: pd.DataFrame, tree: KDTree, x: np.ndarray, we
         return weighted_depth, weighted_weight
     else:
         return None, None
+    """
+    Defines the weighted target from the dataframe from the KDTree and returns the weighted depth and weight
+    of data
+    """
 
 
 def convert_to_xy(conf: Config, aem_data, interp_data):
@@ -115,6 +128,10 @@ def convert_to_xy(conf: Config, aem_data, interp_data):
     w = pd.Series(target_weights, name='weight', index=X.index)
 
     return {'covariates': X, 'targets': y, 'weights': w}
+  """
+  Converts the aem_data and interp_data into an x,y of weighted data to be input in the weighted model with
+  the selected parameters for X, y and w and returns said values as variables
+  """
 
 
 def create_interp_data(conf: Config, input_interp_data, included_lines):
@@ -130,6 +147,11 @@ def create_interp_data(conf: Config, input_interp_data, included_lines):
     else:
         line_required = line[threed_coords]
     return line_required
+    """
+    Creates interpolated data from the weighted model and outputs the line required based on the X, Y and Z
+    coordinates
+    """
+
 
 
 def add_delta(line: pd.DataFrame, conf: Config, origin=None):
@@ -236,6 +258,11 @@ def plot_2d_section(X: pd.DataFrame,
     axs.legend()
     # plt.show()
     # plt.savefig(str(cluster_line_no) + ".jpg")
+    """
+    Plots a 2-D section with parameters X and Z from the dataframe output with the conditions of the scale
+    to be normalised using log or normal scales depending on the output from the testing of the data visualising
+    the conductivity vs depth of the GeoData based on the model interpolation
+    """
 
 
 def plot_conductivity(X: pd.DataFrame,
@@ -293,6 +320,10 @@ def export_model(model, conf: Config, model_type: str = 'learn'):
     with open(model_file, 'wb') as f:
         joblib.dump(state_dict, f)
         log.info(f"Wrote model on disc {model_file}")
+    """
+    Exports the model onto a disk and logs the information for the user to see the process has been
+    completed
+    """
 
 
 def import_model(conf: Config, model_type: str = 'learn'):
@@ -305,6 +336,12 @@ def import_model(conf: Config, model_type: str = 'learn'):
         log.info(f"loaded trained model from location {conf.model_file}")
     model, conf = state_dict["model"], state_dict['config']
     return model, conf
+
+    """
+    Defines an import model function if there is a pre processed model already present. If the model file does not
+    exist, lets the user know through an error. If the model exists, it is then loaded from a location defined by
+    the user and the message is displayed
+    """
 
 
 def plot_cond_mesh(X, conf):
