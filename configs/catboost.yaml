@@ -1,0 +1,143 @@
+data:
+    aem_folder: 'aem_data'
+    train_data:
+        aem_train_data:
+            - '/home/sudipta/Documents/nci/out_resampled/NT_1_albers.shp'
+            - '/home/sudipta/Documents/nci/out_resampled/QLD_1_albers.shp'
+        targets:
+            - '/home/sudipta/Documents/nci/interp/training_NT_albers_Ceno.shp'
+            - '/home/sudipta/Documents/nci/interp/training_QLD_albers_Ceno.shp'
+        weights:
+            - 1
+            - 1
+    apply_model: 'oos.shp'  # this is for prediction on uninterpreted data
+    weight_col: 'confid'  # this is the weight column
+    target_col: 'DEPTH'
+    target_type_col: 'BOUNDARY_N'  # Type
+    included_target_type_categories:
+#        - 'BASE_Cenozoic_TOP_Mesozoic'
+#        - 'BASE_Cenozoic_TOP_Neoproterozoic'
+#        - 'BASE_Cenozoic_TOP_Paleozoic'
+#        - 'BASE_Cenozoic_TOP_Pre-Neoproterozoic'
+        - "CEN-B"
+    line_col: 'SURVEY_LIN'
+    conductivity_columns_prefix: 'cond'
+    thickness_columns_prefix: 'thick'
+    aem_covariate_cols:
+        - 'relief4'
+        - 'mrf_pred'
+        - 'mrvtpLL_s'
+        - 'mvrtpLL_f'
+        - 'LOC_dis'
+        - 'gravity'
+        - 'dem'
+        - 'clim_linda'
+        - 'clim_alber'
+        - 'sagawet'
+        - 'ceno_euc'
+        - 'tx_height'
+    # aem line scan radius in meters - aem points are assumed to be on the same flight line under this radius
+    aem_line_scan_radius: 5000
+    # aem lines are split into batches of aem_line_splits's to generate artificial splits
+    aem_line_splits: 1000
+    test_train_split:
+        train: 0.6
+        val: 0.2
+        test: 0.2
+    rows: -1
+    oos_validation:
+        aem_validation_data:
+            - '/home/sudipta/Documents/nci/out_resampled/QLD_1_albers.shp'
+        targets:
+            - '/home/sudipta/Documents/nci/interp/training_QLD_albers_Ceno.shp'
+
+# will run n_iter * cv number of jobs
+# n_iter: Number of parameter settings that are sampled.
+#n_jobs: int, default=1
+#    Number of jobs to run in parallel. At maximum there are
+#    ``n_points`` times ``cv`` jobs available during each iteration.
+#
+#n_points: int, default=1
+#    Number of parameter settings to sample in parallel. If this does
+#    not align with ``n_iter``, the last iteration will sample less
+#    points.
+
+learning:
+    algorithm: catboost
+    params:
+        objective: RMSEWithUncertainty
+        max_depth: 8
+        learning_rate: 0.17419472963030241
+        n_estimators: 24
+        colsample_bylevel: 0.9793166601242764
+        min_child_samples: 5
+        model_size_reg: 0.1
+        reg_lambda: 7.925780530694022
+        subsample: 0.11757957586875012
+        random_strength:
+        random_state: 3
+    cross_validation:
+        kfold: 3
+    weighted_model:
+        weights:
+            3: 3
+            2: 2
+            1: 1
+    numpy_seed: 10
+    include_aem_covariates: true
+    include_thickness: true
+    include_conductivity_derivatives: true
+    smooth_twod_covariates: true
+    smooth_covariates_kernel_size: (21, 9)
+    # depth - columns (x) -- 30 sections
+    # along the line is - rows (y) -- many 100s of kms with resolutionof 12meters
+    optimisation:
+#        searchcv_params:
+#            n_iter: 6
+#            cv: 2
+#            verbose: 1000
+#            n_points: 3
+#            n_jobs: 6
+#        params_space:
+#            'max_depth': Integer(1, 15)
+#            'learning_rate': Real(10 ** -5, 10 ** 0, prior="log-uniform")
+#            'n_estimators': Integer(2, 20)
+#            'min_child_weight': Integer(1, 10)
+#            'max_delta_step': Integer(0, 10)
+#            'gamma': Real(0, 0.5, prior="uniform")
+#            'colsample_bytree': Real(0.3, 0.9, prior="uniform")
+#            'subsample': Real(0.01, 1.0, prior='uniform')
+#            'colsample_bylevel': Real(0.01, 1.0, prior='uniform')
+#            'colsample_bynode': Real(0.01, 1.0, prior='uniform')
+#            'reg_alpha': Real(1, 100, prior='uniform')
+#            'reg_lambda': Real(0.01, 10, prior='log-uniform')
+        hyperopt_params:
+            max_evals: 5
+            step: 2
+            cv: 3
+            verbose: true
+            random_state: 3
+            scoring: r2  # r2, neg_mean_absolute_error, etc..see note above
+            algo: bayes   # bayes, or anneal
+    hp_params_space:
+        model_size_reg: uniform('model_size_reg', 0, 1e5)
+        max_depth: randint('max_depth', 1, 15)
+        n_estimators: randint('n_estimators', 5, 25)
+        learning_rate: loguniform('learning_rate', -5, 0)
+        min_child_samples: randint('min_child_samples', 0, 10)
+        subsample: uniform('subsample', 0.01, 1.0)
+        colsample_bylevel: uniform('colsample_bylevel', 0.01, 1.0)
+        reg_lambda: loguniform('reg_lambda', 0.01, 10)
+
+
+output:
+    directory: out/xgboost/
+    train:
+        covariates_csv: true
+        true_vs_pred: true
+        feature_ranking: true
+    pred:
+        quantiles: 0.95
+        optimised_model: true
+        covariates_csv: true
+        pred: true

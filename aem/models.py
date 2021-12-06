@@ -202,10 +202,12 @@ class CatBoostWrapper(CatBoostRegressor):
     def __init__(self,  **kwargs):
         if 'loss_function' in kwargs:
             kwargs.pop('loss_function')
+            log.warn("For uncertainty estimation we are going to use 'RMSEWithUncertainty' loss!\n"
+                     "Supplied loss function was not used!!!")
         super(CatBoostWrapper, self).__init__(**kwargs, loss_function='RMSEWithUncertainty')
 
-    def fit(self, X, *args, **kwargs):
-        super().fit(X, *args, **kwargs)
+    def fit(self, X, y, **kwargs):
+        super().fit(X, y, **kwargs)
 
     def predict(self, X, *args, **kwargs):
         return self.predict_dist(X, *args, **kwargs)[0]
