@@ -168,7 +168,7 @@ def predict(config: str, model_type: str) -> None:
         X = add_pred_to_data(X, conf, model)
         log.info(f"Finished predicting {p} using {conf.algorithm} model")
         X.to_csv(r, index=False)
-        log.info(f"Saved training data and target and prediction at {conf.pred_data}")
+        log.info(f"Saved training data and target and prediction at {r.as_posix()}")
 
 
 if __name__ == "__main__":
