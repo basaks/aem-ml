@@ -3,12 +3,13 @@ import sys
 import click
 import json
 import numpy as np
+import geopandas as gpd
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import r2_score, explained_variance_score, mean_squared_error, mean_absolute_error
 from aem import __version__
 from aem.config import Config, cluster_line_segment_id
 from aem import utils
-from aem.data import load_data, load_covariates
+from aem.data import load_data, load_covariates, split_flight_lines_into_multiple_segments
 from aem.training import setup_validation_data
 from aem.prediction import add_pred_to_data
 from aem.models import modelmaps
@@ -157,14 +158,17 @@ def predict(config: str, model_type: str) -> None:
     conf = Config(config)
     model, _ = import_model(conf, model_type)
 
-    pred_aem_data = load_covariates(is_train=False, conf=conf)
+    for p, r in zip(conf.aem_pred_data, conf.pred_data):
+        log.info(f"Predicting {p} using {conf.algorithm} model")
+        aem_data = gpd.GeoDataFrame.from_file(p, rows=conf.shapefile_rows)
+        pred_aem_data = split_flight_lines_into_multiple_segments(aem_data, is_train=False, conf=conf)
 
-    X = utils.prepare_aem_data(conf, pred_aem_data)[utils.select_required_data_cols(conf)]
+        X = utils.prepare_aem_data(conf, pred_aem_data)[utils.select_required_data_cols(conf)]
 
-    X = add_pred_to_data(X, conf, model)
-    log.info(f"Finished predicting {conf.algorithm} model")
-    X.to_csv(conf.pred_data, index=False)
-    log.info(f"Saved training data and target and prediction at {conf.pred_data}")
+        X = add_pred_to_data(X, conf, model)
+        log.info(f"Finished predicting {p} using {conf.algorithm} model")
+        X.to_csv(r, index=False)
+        log.info(f"Saved training data and target and prediction at {conf.pred_data}")
 
 
 if __name__ == "__main__":

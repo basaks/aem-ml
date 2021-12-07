@@ -39,7 +39,7 @@ class Config:
         self.interp_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['train_data']['targets']]
         self.train_data_weights = s['data']['train_data']['weights']
         self.aem_train_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['train_data']['aem_train_data']]
-        self.aem_pred_data = Path(self.aem_folder).joinpath(s['data']['apply_model'])
+        self.aem_pred_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['apply_model']]
         self.shapefile_rows = s['data']['rows']
         self.aem_line_dbscan_eps = s['data']['aem_line_scan_radius']
         self.aem_line_splits = s['data']['aem_line_splits']
@@ -125,7 +125,8 @@ class Config:
         self.train_data = Path(self.output_dir).joinpath(self.name + "_train.csv")
         self.optimisation_data = Path(self.output_dir).joinpath(self.name + "_optimisation.csv")
         self.optimisation_output_hpopt = Path(self.output_dir).joinpath(self.name + '_optimisation_hpopt.csv')
-        self.pred_data = Path(self.output_dir).joinpath(self.name + f"_pred_{self.aem_pred_data.stem}.csv")
+        self.pred_data = [Path(self.output_dir).joinpath(self.name + f"_pred_{p.stem}.csv")
+                          for p in self.aem_pred_data]
         self.oos_data = Path(self.output_dir).joinpath(self.name + "_oos.csv")
         self.quantiles = s['output']['pred']['quantiles']
         self.aem_lines_plot_train = Path(self.output_dir).joinpath('aem_survey_lines_train.jpg')
