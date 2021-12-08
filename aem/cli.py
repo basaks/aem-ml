@@ -157,6 +157,7 @@ def predict(config: str, model_type: str) -> None:
     """Predict using a model saved on disc."""
     conf = Config(config)
     model, _ = import_model(conf, model_type)
+    conducitivity_dervs_and_thickness_cols = conf.conductivity_and_derivatives_cols[:] + conf.thickness_cols[:]
 
     for p, r in zip(conf.aem_pred_data, conf.pred_data):
         log.info(f"Predicting {p} using {conf.algorithm} model")
@@ -167,7 +168,8 @@ def predict(config: str, model_type: str) -> None:
 
         X = add_pred_to_data(X, conf, model)
         log.info(f"Finished predicting {p} using {conf.algorithm} model")
-        X.to_csv(r, index=False)
+
+        X[[c for c in X.columns if c not in conducitivity_dervs_and_thickness_cols]].to_csv(r, index=False)
         log.info(f"Saved training data and target and prediction at {r.as_posix()}")
 
 

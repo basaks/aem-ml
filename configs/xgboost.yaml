@@ -11,7 +11,7 @@ data:
             - 1
             - 2
     apply_model:
-        - 'oos.shp'  # this is for prediction on uninterpreted data
+        - '/home/sudipta/Documents/nci/out_resampled/NT_1_albers.shp'  # this is for prediction on uninterpreted data
     weight_col: 'confid'  # this is the weight column
     target_col: 'DEPTH'
     target_type_col: 'BOUNDARY_N'  # Type
