@@ -216,7 +216,7 @@ def plot_2d_section(X: pd.DataFrame,
 
     h = X[conf.thickness_cols]
     h = h.mul(-1)
-    elevation = X['dem'] if topographic_drape else 0
+    elevation = X['elevation'] if topographic_drape else 0
     elevation_stack = np.repeat(np.atleast_2d(elevation).T, h.shape[1], axis=1)
     h = h.add(elevation_stack)
     dd = X.d

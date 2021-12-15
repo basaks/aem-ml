@@ -30,7 +30,7 @@ data:
         - 'mvrtpLL_f'
         - 'LOC_dis'
         - 'gravity'
-        - 'dem'
+        - 'elevation'
         - 'clim_linda'
         - 'clim_alber'
         - 'sagawet'
