@@ -11,3 +11,4 @@ pytest~=6.2.4
 setuptools~=56.0.0
 matplotlib~=3.4.2
 hyperopt==0.2.5
+catboost==1.0.3
