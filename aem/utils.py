@@ -10,7 +10,6 @@ from aem.config import twod_coords, threed_coords, Config, additional_cols_for_t
 from aem.logger import aemlogger as log
 
 # distance within which an interpretation point is considered to contribute to target values
-radius = 500
 dis_tol = 100  # meters, distance tolerance used`
 
 
@@ -85,15 +84,31 @@ def extent_of_data(data: pd.DataFrame) -> Tuple[float, float, float, float]:
     return x_max, x_min, y_max, y_min
 
 
-def weighted_target(line_required: pd.DataFrame, tree: KDTree, x: np.ndarray, weighted_model):
-    ind, dist = tree.query_radius(x, r=radius, return_distance=True)
+def weighted_target(interp_data: pd.DataFrame, tree: KDTree, covariates_including_xy: pd.Series, weighted_model,
+                    conf: Config):
+    x = covariates_including_xy[twod_coords].values.reshape(1, -1)
+    ind, dist = tree.query_radius(x, r=conf.cutoff_radius, return_distance=True)
     ind, dist = ind[0], dist[0]
     if len(dist):
         dist += 1e-6  # add just in case of we have a zero distance
-        df = line_required.iloc[ind]
-        weighted_depth = np.sum(df.Z_coor * (1 / dist) ** 2) / np.sum((1 / dist) ** 2)
+        df = interp_data.iloc[ind]
+        class_association_num = covariates_including_xy[conf.target_class_indicator_col] if \
+            conf.target_class_indicator_col is not None else None
+        if class_association_num is not None:
+            boolean_multiplier_based_on_class_association = \
+                df[conf.target_class_indicator_col].values == class_association_num
+            # if there are no observations with the cutoff_radius in the same/class_association we dont want the
+            # weighted_depth and weighted_weight to be zero
+            if np.all(boolean_multiplier_based_on_class_association) == 0:
+                return None, None
+        else:
+            boolean_multiplier_based_on_class_association = np.ones_like(dist, dtype=np.bool)
+        depths = df.Z_coor.values[boolean_multiplier_based_on_class_association]
+        dist = dist[boolean_multiplier_based_on_class_association]
+        weighted_depth = np.sum(depths * (1 / dist) ** 2) / np.sum((1 / dist) ** 2)
+        weights = df.weight.values[boolean_multiplier_based_on_class_association]
         if weighted_model:
-            weighted_weight = np.sum(df.weight * (1 / dist) ** 2) / np.sum((1 / dist) ** 2)
+            weighted_weight = np.sum(weights * (1 / dist) ** 2) / np.sum((1 / dist) ** 2)
         else:
             weighted_weight = None
 
@@ -112,8 +127,8 @@ def convert_to_xy(conf: Config, aem_data, interp_data):
     target_weights = []
     for xy in aem_data.iterrows():
         i, covariates_including_xy_ = xy
-        x_y = covariates_including_xy_[twod_coords].values.reshape(1, -1)
-        y, w = weighted_target(interp_data, tree, x_y, weighted_model)
+
+        y, w = weighted_target(interp_data, tree, covariates_including_xy_, weighted_model, conf)
         if y is not None:
             if weighted_model:
                 if w is not None:
@@ -135,15 +150,23 @@ def create_interp_data(conf: Config, input_interp_data, included_lines):
     weighted_model = conf.weighted_model
     if not isinstance(included_lines, list):
         included_lines = [included_lines]
-    line = input_interp_data[(input_interp_data[conf.target_type_col].isin(conf.included_target_type_categories))
+    if conf.target_type_col is not None:
+        line = input_interp_data[(input_interp_data[conf.target_type_col].isin(conf.included_target_type_categories))
                              & (input_interp_data[conf.line_col].isin(included_lines))]
+    else:
+        line = input_interp_data
+
     if ('POINT_X' not in line.columns) and ('POINT_Y' not in line.columns):
         line = __add_x_y(line)
     line = line.rename(columns={conf.target_col: 'Z_coor'})
+
     if weighted_model:
-        line_required = line[threed_coords + ['weight']]
+        required_cols = threed_coords + ['weight']
     else:
-        line_required = line[threed_coords]
+        required_cols = threed_coords
+    if conf.target_class_indicator_col is not None:
+        required_cols.append(conf.target_class_indicator_col)
+    line_required = line[required_cols]
     return line_required
 
 

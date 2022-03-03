@@ -2,45 +2,52 @@ data:
     aem_folder: 'aem_data'
     train_data:
         aem_train_data:
-            - '/home/sudipta/Documents/nci/out_resampled/NT_1_albers.shp'
-            - '/home/sudipta/Documents/nci/out_resampled/QLD_1_albers.shp'
+            - '/home/sudipta/Documents/nci/aem_2d_model_shapes/GoldfieldsAEM_modified_v1_albers_sampled.shp'
+            # - '/home/sudipta/Documents/nci/out_resampled/NT_1_albers.shp'
+            # - '/home/sudipta/Documents/nci/out_resampled/QLD_1_albers.shp'
         targets:
-            - '/home/sudipta/Documents/nci/interp/training_NT_albers_Ceno.shp'
-            - '/home/sudipta/Documents/nci/interp/training_QLD_albers_Ceno.shp'
-        weights:
+            - '/home/sudipta/Documents/nci/aem_2d_model_shapes/test_drillholes_AEM_sampled.shp'
+            #- '/home/sudipta/Documents/nci/interp/training_NT_albers_Ceno.shp'
+            #- '/home/sudipta/Documents/nci/interp/training_QLD_albers_Ceno.shp'
+        target_class_indicator_col:  # 'ero_dep21'
+        weights:  # target shapefiles can have different weights
             - 1
-            - 2
+            # - 2
     apply_model:
         - '/home/sudipta/Documents/nci/out_resampled/NT_1_albers.shp'  # this is for prediction on uninterpreted data
     weight_col: 'confid'  # this is the weight column
-    target_col: 'DEPTH'
-    target_type_col: 'BOUNDARY_N'  # Type
+    target_col: 'Depth' # 'DEPTH'
+    target_type_col:  # 'BOUNDARY_N'  # Type
     included_target_type_categories:
 #        - 'BASE_Cenozoic_TOP_Mesozoic'
 #        - 'BASE_Cenozoic_TOP_Neoproterozoic'
 #        - 'BASE_Cenozoic_TOP_Paleozoic'
 #        - 'BASE_Cenozoic_TOP_Pre-Neoproterozoic'
         - "CEN-B"
-    line_col: 'SURVEY_LIN'
+    line_col: 'ero_dep21' # 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
     thickness_columns_prefix: 'thick'
     aem_covariate_cols:
-        - 'relief4'
-        - 'mrf_pred'
-        - 'mrvtpLL_s'
-        - 'mvrtpLL_f'
-        - 'LOC_dis'
-        - 'gravity'
+        - 'relief_r1'
+        - 'national1'
+        - 'MvrtpLL_1'
+        - 'MvrtpLL_2'
+        - 'LOC_dist1'
+        - 'dem_fill1'
+        - 'Gravity_1'
+        - 'Clim_Pre1'
         - 'elevation'
-        - 'clim_linda'
-        - 'clim_alber'
-        - 'sagawet'
-        - 'ceno_euc'
+        - 'clim_PTA1'
+        - 'SagaWET91'
+        - 'ceno_euc1'
+        - 'ero_dep21'
         - 'tx_height'
     # aem line scan radius in meters - aem points are assumed to be on the same flight line under this radius
     aem_line_scan_radius: 5000
     # aem lines are split into batches of aem_line_splits's to generate artificial splits
     aem_line_splits: 1000
+    # radius(m) cutoff for a target to not contribute in inverse weighted target
+    cutoff_radius: 500
     test_train_split:
         train: 0.6
         val: 0.2

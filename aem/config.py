@@ -39,11 +39,13 @@ class Config:
         self.aem_folder = s['data']['aem_folder']
         self.interp_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['train_data']['targets']]
         self.train_data_weights = s['data']['train_data']['weights']
+        self.target_class_indicator_col = s['data']['train_data']['target_class_indicator_col']
         self.aem_train_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['train_data']['aem_train_data']]
         self.aem_pred_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['apply_model']]
         self.shapefile_rows = s['data']['rows']
-        self.aem_line_dbscan_eps = s['data']['aem_line_scan_radius']
+        self.aem_line_scan_eps = s['data']['aem_line_scan_radius']
         self.aem_line_splits = s['data']['aem_line_splits']
+        self.cutoff_radius = s['data']['cutoff_radius']
         # oos_validation
         self.oos_validation = False
         self.oos_validation_data = [Path(self.aem_folder).joinpath(p)

@@ -25,7 +25,7 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
     from matplotlib.colors import ListedColormap
 
     _X = aem_data.loc[:, utils.twod_coords]
-    dbscan = DBSCAN(eps=conf.aem_line_dbscan_eps, n_jobs=-1, min_samples=10)
+    dbscan = DBSCAN(eps=conf.aem_line_scan_eps, n_jobs=-1, min_samples=10)
     # t0 = time.time()
     dbscan.fit(_X)
     line_no = dbscan.labels_.astype(np.uint16)
