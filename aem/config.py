@@ -2,9 +2,6 @@ import yaml
 from pathlib import Path
 import geopandas as gpd
 
-# column containing H, M, L categories corresponding to confidence levels of interpretation
-confidence_indicator_col = 'BoundConf'
-
 twod_coords = ['POINT_X', 'POINT_Y']
 threed_coords = twod_coords + ['Z_coor']
 cluster_line_no = 'cluster_line_no'
@@ -86,7 +83,6 @@ class Config:
             if self.skopt and self.hpopt:
                 raise ConfigException("Only one of searchcv_params or hyperopt_params can be specified")
 
-
         # weighted model params
         if 'weighted_model' in s['learning']:
             self.weighted_model = True
@@ -99,7 +95,6 @@ class Config:
         self.target_col = s['data']['target_col']
         self.target_type_col = s['data']['target_type_col']
         self.included_target_type_categories = s['data']['included_target_type_categories']
-        self.line_col = s['data']['line_col']
         self.conductivity_columns_prefix = s['data']['conductivity_columns_prefix']
         self.thickness_columns_prefix = s['data']['thickness_columns_prefix']
         self.aem_covariate_cols = s['data']['aem_covariate_cols']

@@ -47,7 +47,7 @@ def prepare_aem_data(conf: Config, aem_data: pd.DataFrame):
     conductivity_copy = aem_data[conf.conductivity_cols].copy()
     conductivity_copy.columns = conf.conductivity_derivatives_cols
     conductivity_diff = conductivity_copy.diff(axis=1, periods=-1)
-    conductivity_diff.fillna(axis=1, method='ffill', inplace=True)
+    conductivity_diff = conductivity_diff.ffill(axis=1)
     aem_data.loc[:, conf.conductivity_derivatives_cols] = conductivity_diff
     return aem_data
 
@@ -99,8 +99,12 @@ def weighted_target(interp_data: pd.DataFrame, tree: KDTree, covariates_includin
                 df[conf.target_class_indicator_col].values == class_association_num
             # if there are no observations with the cutoff_radius in the same/class_association we dont want the
             # weighted_depth and weighted_weight to be zero
-            if np.all(boolean_multiplier_based_on_class_association) == 0:
+            log.debug(f"boolean nultiplier {boolean_multiplier_based_on_class_association}")
+            if np.any(boolean_multiplier_based_on_class_association) == 0:
+                log.debug("All targets with cutoff radius are in the different ero_dep region!")
                 return None, None
+            else:
+                log.debug("Some targets with cutoff radius are in the same ero_dep region!")
         else:
             boolean_multiplier_based_on_class_association = np.ones_like(dist, dtype=np.bool)
         depths = df.Z_coor.values[boolean_multiplier_based_on_class_association]
@@ -146,13 +150,10 @@ def convert_to_xy(conf: Config, aem_data, interp_data):
     return {'covariates': X, 'targets': y, 'weights': w}
 
 
-def create_interp_data(conf: Config, input_interp_data, included_lines):
+def create_interp_data(conf: Config, input_interp_data):
     weighted_model = conf.weighted_model
-    if not isinstance(included_lines, list):
-        included_lines = [included_lines]
     if conf.target_type_col is not None:
-        line = input_interp_data[(input_interp_data[conf.target_type_col].isin(conf.included_target_type_categories))
-                             & (input_interp_data[conf.line_col].isin(included_lines))]
+        line = input_interp_data[(input_interp_data[conf.target_type_col].isin(conf.included_target_type_categories))]
     else:
         line = input_interp_data
 

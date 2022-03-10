@@ -10,6 +10,12 @@ data:
     apply_model: 'oos.shp'
     weight_col: 'BoundConf'
     line_col: 'SURVEY_LIN'
+    target_type_col: 'Type'
+    included_target_type_categories:
+        - 'BASE_Cenozoic_TOP_Mesozoic'
+        - 'BASE_Cenozoic_TOP_Neoproterozoic'
+        - 'BASE_Cenozoic_TOP_Paleozoic'
+        - 'BASE_Cenozoic_TOP_Pre-Neoproterozoic'
     conductivity_columns_prefix: 'cond'
     thickness_columns_prefix: 'thick'
     aem_covariate_cols:
@@ -25,6 +31,7 @@ data:
     aem_line_scan_radius: 500
     # aem lines are split into batches of aem_line_splits's to generate artificial splits
     aem_line_splits: 1000
+    cutoff_radius: 500
     test_train_split:
         train: 0.6
         val: 0.2

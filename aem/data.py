@@ -79,13 +79,13 @@ def load_data(conf: Config):
     # plus the weights due to the datasets themselves
     if conf.weighted_model:
         for a, w in zip(all_interp_training_datasets, train_weights):
+            if conf.weight_col not in a.columns:
+                a[conf.weight_col] = 1  # this takes care of the drillhole files
             a['weight'] = a[conf.weight_col].map(conf.weight_dict) * w
 
     all_interp_training_data = pd.concat(all_interp_training_datasets, axis=0, ignore_index=True)
     # how many lines in interp data
-    lines_in_data = np.unique(all_interp_training_data[conf.line_col])
-
-    interp_data = utils.create_interp_data(conf, all_interp_training_data, included_lines=list(lines_in_data))
+    interp_data = utils.create_interp_data(conf, all_interp_training_data)
 
     aem_xy_and_other_covs = utils.prepare_aem_data(conf, original_aem_data)[utils.select_required_data_cols(conf)]
     smooth = '_smooth_' if conf.smooth_twod_covariates else '_'
