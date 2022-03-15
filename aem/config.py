@@ -36,7 +36,10 @@ class Config:
         self.aem_folder = s['data']['aem_folder']
         self.interp_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['train_data']['targets']]
         self.train_data_weights = s['data']['train_data']['weights']
-        self.target_class_indicator_col = s['data']['train_data']['target_class_indicator_col']
+
+        self.target_class_indicator_col = s['data']['train_data']['target_class_indicator_col'] if \
+            'target_class_indicator_col' in s['data']['train_data'] else None
+
         self.aem_train_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['train_data']['aem_train_data']]
         self.aem_pred_data = [Path(self.aem_folder).joinpath(p) for p in s['data']['apply_model']]
         self.shapefile_rows = s['data']['rows']
@@ -85,8 +88,11 @@ class Config:
 
         # weighted model params
         if 'weighted_model' in s['learning']:
-            self.weighted_model = s['learning']['weighted_model']
-            # self.weight_dict = s['learning']['weighted_model']['weights']
+            self.weighted_model = True
+            if 'weights_map' in s['learning']:
+                self.weights_map = s['learning']['weights_map']
+            else:
+                self.weights_map = False
             self.weight_col = s['data']['weight_col']
         else:
             self.weighted_model = False
