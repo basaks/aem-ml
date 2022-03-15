@@ -7,16 +7,16 @@ data:
              - '/home/sudipta/Documents/nci/out_resampled/QLD_1_albers.shp'
         targets:
 #            - '/home/sudipta/Documents/nci/aem_2d_model_shapes/test_drillholes_AEM_sampled.shp'
-            - '/home/sudipta/Documents/nci/interp/training_NT_albers_Ceno.shp'
-            - '/home/sudipta/Documents/nci/interp/training_QLD_albers_Ceno.shp'
+            - '/home/sudipta/Documents/nci/interpretation_datasets/training_NT_albers_Ceno.shp'
+            - '/home/sudipta/Documents/nci/interpretation_datasets/training_QLD_albers_Ceno.shp'
         target_class_indicator_col:  'ero_dep21'
-        weights:  # target shapefiles can have different weights
+        weights:  # target shapefiles can have different weights, each shapefile weight must be speficied
             - 1
-            # - 2
+            - 1
     apply_model:
         - '/home/sudipta/Documents/nci/out_resampled/NT_1_albers.shp'  # this is for prediction on uninterpreted data
     weight_col: 'confid'  # this is the weight column based on confidence levels of the interpretatins points
-    target_col: 'Depth' # 'DEPTH'
+    target_col: 'DEPTH'
     target_type_col:  # 'BOUNDARY_N'  # Type
     included_target_type_categories:
 #        - 'BASE_Cenozoic_TOP_Mesozoic'
@@ -90,11 +90,11 @@ learning:
         min_child_weight: 3
     cross_validation:
         kfold: 3
-    weighted_model:
-        weights:
-            3: 3
-            2: 2
-            1: 1
+    weighted_model: true
+#        weights:
+#            3: 3
+#            2: 2
+#            1: 1
     numpy_seed: 10
     include_aem_covariates: true
     include_thickness: true

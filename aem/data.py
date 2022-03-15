@@ -81,7 +81,8 @@ def load_data(conf: Config):
         for a, w in zip(all_interp_training_datasets, train_weights):
             if conf.weight_col not in a.columns:
                 a[conf.weight_col] = 1  # this takes care of the drillhole files
-            a['weight'] = a[conf.weight_col].map(conf.weight_dict) * w
+            # a['weight'] = a[conf.weight_col].map(conf.weight_dict) * w
+            a['weight'] = a[conf.weight_col] * w
 
     all_interp_training_data = pd.concat(all_interp_training_datasets, axis=0, ignore_index=True)
     # how many lines in interp data

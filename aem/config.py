@@ -85,8 +85,8 @@ class Config:
 
         # weighted model params
         if 'weighted_model' in s['learning']:
-            self.weighted_model = True
-            self.weight_dict = s['learning']['weighted_model']['weights']
+            self.weighted_model = s['learning']['weighted_model']
+            # self.weight_dict = s['learning']['weighted_model']['weights']
             self.weight_col = s['data']['weight_col']
         else:
             self.weighted_model = False
