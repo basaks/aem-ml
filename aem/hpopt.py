@@ -52,6 +52,8 @@ def optimise_model(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: pd.Serie
 
     X, y, w, le_groups, cv = setup_validation_data(X, y, w, groups, cv_folds, random_state)
 
+    log.info(f"shape of optimization data {X.shape}")
+
     def objective(params, random_state=random_state, cv=cv, X=X[model_cols], y=y):
         # the function gets a set of variable parameters in "param"
         all_params = {**conf.model_params}
