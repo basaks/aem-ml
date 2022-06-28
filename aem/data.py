@@ -1,3 +1,4 @@
+from typing import Tuple
 from pathlib import Path
 import geopandas as gpd
 import joblib
@@ -58,49 +59,49 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
     return aem_data
 
 
-def load_data(conf: Config):
+def load_data(conf: Config) -> Tuple[pd.DataFrame, pd.Series, pd.Series]:
     """
     Loads covariates specified in the config file
     :param conf: Config class instance
     """
-    original_aem_data = load_covariates(is_train=True, conf=conf)
-    if conf.oos_validation:
-        all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in
-                                        conf.oos_interp_data]
-    else:
-        all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in
-                                        conf.interp_data]
-
-    log.info("reading interp data...")
-
-    train_weights = conf.train_data_weights
-
-    # apply the weights due to confidence levels assigned by the interpreter on the interpretation/target values
-    # plus the weights due to the datasets themselves
-    if conf.weighted_model:
-        for a, w in zip(all_interp_training_datasets, train_weights):
-            if conf.weight_col not in a.columns:
-                a[conf.weight_col] = 1  # this takes care of the drillhole files
-            if conf.weights_map:
-                a['weight'] = a[conf.weight_col].map(conf.weights_map) * w
-            a['weight'] = a[conf.weight_col] * w
-
-    all_interp_training_data = pd.concat(all_interp_training_datasets, axis=0, ignore_index=True)
-    # how many lines in interp data
-    interp_data = utils.create_interp_data(conf, all_interp_training_data)
-
-    aem_xy_and_other_covs = utils.prepare_aem_data(conf, original_aem_data)[utils.select_required_data_cols(conf)]
     smooth = '_smooth_' if conf.smooth_twod_covariates else '_'
-    data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
-    # data_path = f'covariates_targets_2d{smooth}weights.data'
-    # if (not Path(data_path).exists()) or conf.oos_validation:
-    #     data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
-    #     log.info("saving data on disc for future use")
-    #     if not conf.oos_validation:  # only during training
-    #         joblib.dump(data, open(data_path, 'wb'))
-    # else:
-    #     log.warning("Reusing data from disc!!!")
-    #     data = joblib.load(open(data_path, 'rb'))
+    # data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
+    data_path = f'covariates_targets_2d{smooth}weights.data'
+    if (not Path(data_path).exists()) or conf.oos_validation:
+        original_aem_data = load_covariates(is_train=True, conf=conf)
+        if conf.oos_validation:
+            all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in
+                                            conf.oos_interp_data]
+        else:
+            all_interp_training_datasets = [gpd.GeoDataFrame.from_file(i, rows=conf.shapefile_rows) for i in
+                                            conf.interp_data]
+
+        log.info("reading interp data...")
+
+        train_weights = conf.train_data_weights
+
+        # apply the weights due to confidence levels assigned by the interpreter on the interpretation/target values
+        # plus the weights due to the datasets themselves
+        if conf.weighted_model:
+            for a, w in zip(all_interp_training_datasets, train_weights):
+                if conf.weight_col not in a.columns:
+                    a[conf.weight_col] = 1  # this takes care of the drillhole files
+                if conf.weights_map:
+                    a['weight'] = a[conf.weight_col].map(conf.weights_map) * w
+                a['weight'] = a[conf.weight_col] * w
+
+        all_interp_training_data = pd.concat(all_interp_training_datasets, axis=0, ignore_index=True)
+        # how many lines in interp data
+        interp_data = utils.create_interp_data(conf, all_interp_training_data)
+
+        aem_xy_and_other_covs = utils.prepare_aem_data(conf, original_aem_data)[utils.select_required_data_cols(conf)]
+        data = utils.convert_to_xy(conf, aem_xy_and_other_covs, interp_data)
+        log.info("saving data on disc for future use")
+        if not conf.oos_validation:  # only during training
+            joblib.dump(data, open(data_path, 'wb'))
+    else:
+        log.warning("Reusing data from disc!!!")
+        data = joblib.load(open(data_path, 'rb'))
 
     X = data['covariates']
     y = data['targets']

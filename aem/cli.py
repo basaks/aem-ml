@@ -53,7 +53,7 @@ def learn(config: str) -> None:
     random_state = conf.model_params['random_state']
     X, y, w, le_groups, cv = setup_validation_data(X, y, weights=weights, groups=X[cluster_line_segment_id],
                                                    cv_folds=conf.cross_validation_folds, random_state=random_state)
-
+    log.info(f"Shape of input training data {X.shape}")
     if conf.cross_validate:
         log.info(f"Running cross validation of {conf.algorithm} model with {cv.__class__.__name__} using"
                  f" {conf.cross_validation_folds} folds")
@@ -96,10 +96,23 @@ def learn(config: str) -> None:
 @main.command()
 @click.option("-c", "--config", type=click.Path(exists=True), required=True,
               help="The model configuration file")
-def optimise(config: str) -> None:
+@click.option("-f", "--frac",
+              type=click.FloatRange(min=0.0, max=1.0, min_open=False, max_open=False, clamp=False),
+              required=False,
+              default=1.0,
+              help="The fraction of the original data to optimise with")
+@click.option("-r", "--random_state",
+              type=click.INT,
+              required=False,
+              default=13,
+              help="The random seed to use while taking fraction")
+def optimise(config: str, frac, random_state) -> None:
     """Optimise model parameters using Bayesian regression."""
     conf = Config(config)
     X, y, w = load_data(conf)
+    X_frac = X.sample(frac=frac, random_state=random_state)
+    y_frac = y[X_frac.index]
+    w_frac = w[X_frac.index]
 
     model = hpopt.optimise_model(X, y, w, X[cluster_line_segment_id], conf)
     utils.export_model(model, conf, model_type='optimise')

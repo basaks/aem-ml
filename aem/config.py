@@ -92,7 +92,7 @@ class Config:
             if 'weights_map' in s['learning']:
                 self.weights_map = s['learning']['weights_map']
             else:
-                self.weights_map = False
+                self.weights_map = None
             self.weight_col = s['data']['weight_col']
         else:
             self.weighted_model = False
