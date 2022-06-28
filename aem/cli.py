@@ -115,6 +115,7 @@ def optimise(config: str, frac, random_state) -> None:
         X = X.sample(frac=frac, random_state=random_state)
         y = y[X.index]
         w = w[X.index]
+        log.info(f"shape of training data {X.shape}")
 
     model = hpopt.optimise_model(X, y, w, X[cluster_line_segment_id], conf)
     utils.export_model(model, conf, model_type='optimise')
