@@ -110,9 +110,10 @@ def optimise(config: str, frac, random_state) -> None:
     """Optimise model parameters using Bayesian regression."""
     conf = Config(config)
     X, y, w = load_data(conf)
-    X_frac = X.sample(frac=frac, random_state=random_state)
-    y_frac = y[X_frac.index]
-    w_frac = w[X_frac.index]
+    if frac < 1.0:
+        X = X.sample(frac=frac, random_state=random_state)
+        y = y[X.index]
+        w = w[X.index]
 
     model = hpopt.optimise_model(X, y, w, X[cluster_line_segment_id], conf)
     utils.export_model(model, conf, model_type='optimise')
