@@ -111,6 +111,7 @@ def optimise(config: str, frac, random_state) -> None:
     conf = Config(config)
     X, y, w = load_data(conf)
     if frac < 1.0:
+        log.info(f"using {frac*100} percent of the original data for optimisation")
         X = X.sample(frac=frac, random_state=random_state)
         y = y[X.index]
         w = w[X.index]

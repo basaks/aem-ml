@@ -14,9 +14,9 @@ data:
     target_type_col: 'Type'  # Type
     included_target_type_categories:
         - 'BASE_Cenozoic_TOP_Mesozoic'
-        - 'BASE_Cenozoic_TOP_Neoproterozoic'
-        - 'BASE_Cenozoic_TOP_Paleozoic'
-        - 'BASE_Cenozoic_TOP_Pre-Neoproterozoic'
+#        - 'BASE_Cenozoic_TOP_Neoproterozoic'
+#        - 'BASE_Cenozoic_TOP_Paleozoic'
+#        - 'BASE_Cenozoic_TOP_Pre-Neoproterozoic'
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
     thickness_columns_prefix: 'thick'
