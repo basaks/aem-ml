@@ -51,7 +51,7 @@ def learn(config: str) -> None:
     model = modelmaps[conf.algorithm](**conf.model_params)
     model_cols = utils.select_columns_for_model(conf)
     random_state = conf.model_params['random_state']
-    X, y, w, le_groups, cv = setup_validation_data(X, y, weights=weights, groups=X[cluster_line_segment_id],
+    X, y, w, le_groups, cv = setup_validation_data(X, y, weights=weights, groups=X[conf.group_col],
                                                    cv_folds=conf.cross_validation_folds, random_state=random_state)
     log.info(f"Shape of input training data {X.shape}")
     if conf.cross_validate:
@@ -184,8 +184,8 @@ def predict(config: str, model_type: str) -> None:
 
         X = add_pred_to_data(X, conf, model)
         log.info(f"Finished predicting {p} using {conf.algorithm} model")
-
-        X[[c for c in X.columns if c not in conducitivity_dervs_and_thickness_cols]].to_csv(r, index=False)
+        X.to_csv(r, index=False)
+        # X[[c for c in X.columns if c not in conducitivity_dervs_and_thickness_cols]].to_csv(r, index=False)
         log.info(f"Saved training data and target and prediction at {r.as_posix()}")
 
 

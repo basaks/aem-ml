@@ -46,6 +46,7 @@ class Config:
         self.aem_line_scan_eps = s['data']['aem_line_scan_radius']
         self.aem_line_splits = s['data']['aem_line_splits']
         self.cutoff_radius = s['data']['cutoff_radius']
+        self.group_col = s['data']['group_col'] if 'group_col' in s['data'] else cluster_line_segment_id
         # oos_validation
         self.oos_validation = False
         self.oos_validation_data = [Path(self.aem_folder).joinpath(p)

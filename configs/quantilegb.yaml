@@ -20,6 +20,9 @@ data:
     line_col: 'SURVEY_LIN'
     conductivity_columns_prefix: 'cond'
     thickness_columns_prefix: 'thick'
+    group_col: cluster_line_segment_id   # optional, `cluster_line_segment_id` is determined by clustering algo
+    # if a different group_col is provided via the shapefile that is used instead
+    cutoff_radius: 500
     aem_covariate_cols:
         - 'ceno_euc_a'
         - 'Gravity_la'
@@ -33,7 +36,7 @@ data:
     aem_line_scan_radius: 500
     # aem lines are split into batches of aem_line_splits's to generate artificial splits
     aem_line_splits: 1000
-    test_train_split:
+    test_train_split:  # currently unused
         train: 0.6
         val: 0.2
         test: 0.2
@@ -48,6 +51,8 @@ learning:
     algorithm: quantilegb
     params:
         max_depth: 20
+        upper_alpha: 90
+        lower_alpha: 10
         learning_rate: 0.1
         n_estimators: 200
         subsample: 0.9
