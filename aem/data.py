@@ -54,7 +54,7 @@ def split_flight_lines_into_multiple_segments(aem_data: pd.DataFrame, is_train: 
     aem_data[cluster_line_no] = line_no
 
     aem_data = aem_data.groupby(cluster_line_no).apply(utils.add_delta, conf=conf)
-    log.info(f"Found {len(np.unique(line_no))} groups")
+    log.info(f"Found {len(np.unique(line_no))} groups via clustering")
     log.info("Finished segmentation")
     return aem_data
 

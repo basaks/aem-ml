@@ -2,6 +2,7 @@
 import sys
 import click
 import json
+from collections import Counter
 import numpy as np
 import geopandas as gpd
 from sklearn.model_selection import cross_val_predict
@@ -51,6 +52,7 @@ def learn(config: str) -> None:
     model = modelmaps[conf.algorithm](**conf.model_params)
     model_cols = utils.select_columns_for_model(conf)
     random_state = conf.model_params['random_state']
+    log.info(f"Using group col {conf.group_col} with the following breakdown: \n {Counter(X[conf.group_col])}")
     X, y, w, le_groups, cv = setup_validation_data(X, y, weights=weights, groups=X[conf.group_col],
                                                    cv_folds=conf.cross_validation_folds, random_state=random_state)
     log.info(f"Shape of input training data {X.shape}")
