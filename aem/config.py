@@ -6,7 +6,8 @@ twod_coords = ['POINT_X', 'POINT_Y']
 threed_coords = twod_coords + ['Z_coor']
 cluster_line_no = 'cluster_line_no'
 cluster_line_segment_id = 'cluster_line_segment_id'
-additional_cols_for_tracking = ['fiducial', 'uniqueid', 'flight', 'line', cluster_line_no, 'd']
+additional_cols_for_tracking = ['fiducial', 'uniqueid', 'flight', 'line', cluster_line_no, 'd',
+                                cluster_line_segment_id]
 
 
 class Config:
@@ -69,6 +70,9 @@ class Config:
         self.include_conductivity_derivatives = s['learning']['include_conductivity_derivatives']
         self.smooth_twod_covariates = s['learning']['smooth_twod_covariates']
         self.smooth_covariates_kernel_size = eval(s['learning']['smooth_covariates_kernel_size'])
+
+        # prediction
+        self.predict = False
 
         # model parameter optimisation
         self.hpopt = False

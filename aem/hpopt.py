@@ -48,7 +48,7 @@ def optimise_model(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: pd.Serie
     scoring = conf.hyperopt_params.pop('scoring')
     scorer = check_scoring(reg(** conf.model_params), scoring=scoring)
 
-    model_cols = utils.select_columns_for_model(conf)
+    model_cols = utils.select_cols_used_in_model(conf)
 
     X, y, w, le_groups, cv = setup_validation_data(X, y, w, groups, cv_folds, random_state)
 

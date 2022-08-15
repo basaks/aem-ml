@@ -50,7 +50,7 @@ def learn(config: str) -> None:
 
     X, y, weights = load_data(conf)
     model = modelmaps[conf.algorithm](**conf.model_params)
-    model_cols = utils.select_columns_for_model(conf)
+    model_cols = utils.select_cols_used_in_model(conf)
     random_state = conf.model_params['random_state']
     log.info(f"Using group col {conf.group_col} with the following breakdown: \n {Counter(X[conf.group_col])}")
     X, y, w, le_groups, cv = setup_validation_data(X, y, weights=weights, groups=X[conf.group_col],
@@ -174,6 +174,7 @@ def validate(config: str, model_type: str) -> None:
 def predict(config: str, model_type: str) -> None:
     """Predict using a model saved on disc."""
     conf = Config(config)
+    conf.predict = True
     model, _ = import_model(conf, model_type)
     conducitivity_dervs_and_thickness_cols = conf.conductivity_and_derivatives_cols[:] + conf.thickness_cols[:]
 

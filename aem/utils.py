@@ -62,11 +62,13 @@ def apply_twod_median_filter(conf: Config, aem_conductivities: pd.DataFrame):
 
 
 def select_required_data_cols(conf: Config):
-    cols = select_columns_for_model(conf)[:]
+    cols = select_cols_used_in_model(conf)[:]
+    if not conf.predict:
+        cols.append(conf.group_col)
     return cols + twod_coords + additional_cols_for_tracking
 
 
-def select_columns_for_model(conf: Config):
+def select_cols_used_in_model(conf: Config):
     cols = conf.conductivity_cols[:]
     if conf.include_aem_covariates:
         cols += conf.aem_covariate_cols
@@ -74,7 +76,6 @@ def select_columns_for_model(conf: Config):
         cols += conf.conductivity_derivatives_cols
     if conf.include_thickness:
         cols += conf.thickness_cols
-    cols.append(conf.group_col)
     return cols
 
 

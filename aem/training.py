@@ -49,7 +49,7 @@ def bayesian_optimisation(X: pd.DataFrame, y: pd.Series, w: pd.Series, groups: p
         refit=False
     )
     log.info(f"Optimising params using BayesSearchCV .....")
-    model_cols = utils.select_columns_for_model(conf)
+    model_cols = utils.select_cols_used_in_model(conf)
 
     searchcv.fit(X[model_cols], y, groups=groups)
 
@@ -100,7 +100,7 @@ def setup_validation_data(X, y, weights, groups, cv_folds, random_state=None):
 def train_test_score(X: pd.DataFrame, y: pd.Series, w: pd.Series, conf: Config, model_params: Dict):
     model = modelmaps[conf.algorithm](** model_params)
 
-    model_cols = utils.select_columns_for_model(conf)
+    model_cols = utils.select_cols_used_in_model(conf)
     # split data into two non-overlapping parts
     X_test, X_train, w_test, w_train, y_test, y_train = create_train_test_set_based_on_column(
         X, y, w, cluster_line_segment_id

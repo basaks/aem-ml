@@ -5,7 +5,7 @@ from aem.logger import aemlogger as log
 
 
 def add_pred_to_data(X: pd.DataFrame, conf: Config, model, oos: bool = False) -> pd.DataFrame:
-    model_cols = utils.select_columns_for_model(conf)
+    model_cols = utils.select_cols_used_in_model(conf)
     prefix = 'oos_' if oos else ''
     if hasattr(model, 'predict_dist'):
         p, v, ql, qu = model.predict_dist(X[model_cols], interval=conf.quantiles)
