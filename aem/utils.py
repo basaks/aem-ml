@@ -74,7 +74,7 @@ def select_columns_for_model(conf: Config):
         cols += conf.conductivity_derivatives_cols
     if conf.include_thickness:
         cols += conf.thickness_cols
-
+    cols.append(conf.group_col)
     return cols
 
 

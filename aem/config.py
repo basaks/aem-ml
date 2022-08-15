@@ -6,8 +6,7 @@ twod_coords = ['POINT_X', 'POINT_Y']
 threed_coords = twod_coords + ['Z_coor']
 cluster_line_no = 'cluster_line_no'
 cluster_line_segment_id = 'cluster_line_segment_id'
-additional_cols_for_tracking = ['fiducial', 'uniqueid', 'flight', 'line', cluster_line_no, 'd',
-                                cluster_line_segment_id]
+additional_cols_for_tracking = ['fiducial', 'uniqueid', 'flight', 'line', cluster_line_no, 'd']
 
 
 class Config:
