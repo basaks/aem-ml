@@ -88,7 +88,8 @@ def load_data(conf: Config) -> Tuple[pd.DataFrame, pd.Series, pd.Series]:
                     a[conf.weight_col] = 1  # this takes care of the drillhole files
                 if conf.weights_map:
                     a['weight'] = a[conf.weight_col].map(conf.weights_map) * w
-                a['weight'] = a[conf.weight_col] * w
+                else:
+                    a['weight'] = a[conf.weight_col] * w
 
         all_interp_training_data = pd.concat(all_interp_training_datasets, axis=0, ignore_index=True)
         # how many lines in interp data

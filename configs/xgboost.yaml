@@ -91,11 +91,11 @@ learning:
     cross_validation:
         kfold: 3
     weighted_model: true
-    # if weights_map is provided numbers/letters in the weight column can be mapped to a weight
-#    weights_map:
-#        3: 3
-#        2: 2
-#        1: 1
+        # if weights_map is provided numbers/letters in the weight column can be mapped to a weight
+        weights_map:
+            3: 3
+            2: 2
+            1: 1
     numpy_seed: 10
     include_aem_covariates: true
     include_thickness: true

@@ -6,7 +6,7 @@ import numpy as np
 from scipy.signal import medfilt2d
 import pandas as pd
 from sklearn.neighbors import KDTree
-from aem.config import twod_coords, threed_coords, Config, additional_cols_for_tracking
+from aem.config import twod_coords, threed_coords, Config, additional_cols_for_tracking, cluster_line_segment_id
 from aem.logger import aemlogger as log
 
 # distance within which an interpretation point is considered to contribute to target values
@@ -202,9 +202,118 @@ def add_delta(line: pd.DataFrame, conf: Config, origin=None):
     for i, a in enumerate(arrs):
         arrs[i] = np.ones_like(a) * i
     arr = np.concatenate(arrs).ravel().astype(str)
-    line['cluster_line_segment_id'] = pd.Series([cluster_id + b for b in arr], index=line.index)
+    line[cluster_line_segment_id] = pd.Series([cluster_id + b for b in arr], index=line.index)
 
-    return line[line_cols + ['d', 'cluster_line_segment_id']]
+    return line[line_cols + ['d', cluster_line_segment_id]]
+
+
+def plot_2d_section_paper(
+    X: pd.DataFrame,
+    XP: pd.DataFrame,
+    cluster_line_no,
+    conf: Config,
+    col_names: Optional[Union[str, List[str]]] = None,
+    log_conductivity=False,
+    slope=False,
+    flip_column=False, v_min=0.3, v_max=0.8,
+    topographic_drape=True,
+    sort_vertically=True,
+    ):
+    if col_names is None:
+        col_names = []
+    if isinstance(col_names, str):
+        col_names = [col_names]
+    NN=30
+    from scipy.signal import savgol_filter
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LogNorm, Normalize, SymLogNorm, PowerNorm
+    # from matplotlib.colors import Colormap
+    X = X[X.cluster_line_no == cluster_line_no]
+    XP = XP[XP.cluster_line_no == cluster_line_no]
+    X.d = X.d/1000
+    XP.d = XP.d/1000
+    X = determine_and_sort_by_dominant_line_direction(X)
+    XP = determine_and_sort_by_dominant_line_direction(XP, 'POINT_Y')
+    if slope:
+        Z = X[conf.conductivity_derivatives_cols[:NN]]
+        Z = Z - np.min(np.min((Z))) + 1.0e-10
+    else:
+        Z = X[conf.conductivity_cols[:NN]]
+    if log_conductivity:
+            Z = np.log10(Z)
+
+    h = X[conf.thickness_cols[:NN]]
+    h = h.mul(-1)
+    elevation = X['demh1sv11'] if topographic_drape else 0
+    elevation_stack = np.repeat(np.atleast_2d(elevation).T, h.shape[1], axis=1)
+    h = h.add(elevation_stack)
+    dd = X.d
+    ddd = np.atleast_2d(dd).T
+    d = np.repeat(ddd, h.shape[1], axis=1)
+    fig, ax = plt.subplots(figsize=(30, 6))
+    cmap = plt.get_cmap('turbo')
+
+    if slope:
+            norm = LogNorm(vmin=v_min, vmax=v_max)
+    else:
+        norm = Normalize(vmin=v_min, vmax=v_max)
+
+    im = ax.pcolormesh(d, h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True, shading='auto')
+    fig.colorbar(im, ax=ax)
+    ax.set_ylim([300, 800])
+    ax.set_xlim([68, 120])
+    axs = ax.twinx()
+    if 'cv_pred' in X.columns:  # training/cross-val
+            y_pred = X['cv_pred']
+    elif 'oos_pred' in X.columns:
+        y_pred = X['oos_pred']
+    else:  # prediction
+        y_pred = X['pred']
+    if 'target' in XP.columns:
+        target = XP['target']
+        elevation_p = XP['demh1sv11']
+        pred = savgol_filter(y_pred, 11, 3)
+        ax.plot(XP.d, elevation_p - target, label='interpretation', linewidth=2, color='k')
+
+    pred = savgol_filter(y_pred, 11, 3)  # window size 51, polynomial order 3
+    pred_upper = savgol_filter(X.upper_quantile, 11, 3)  # window size 51, polynomial order 3
+    pred_lower = savgol_filter(X.lower_quantile, 11, 3)  # window size 51, polynomial order 3
+    ax.plot(X.d, elevation - pred, label='prediction', linewidth=2, color='m')
+    y_upper = elevation-pred_upper
+    y_lower = elevation-pred_lower
+    # ax.plot(X.d, y_upper, "m-")
+    # ax.plot(X.d, y_lower, "m-")
+    # plt.fill_between(
+    #     X.d,
+    #     (elevation - pred) - pred_upper, (elevation - pred) - pred_lower, alpha=0.4, label='Predicted 80% interval'
+    # )
+    ax.plot(X.d, elevation - pred_upper, label='percentile', linewidth=1, color='m', ls='--')
+    ax.plot(X.d, elevation - pred_lower, label='percentile', linewidth=1, color='m', ls='--')
+    plt.fill_between(
+        X.d,
+        (elevation - pred) - pred_upper, (elevation - pred) - pred_lower, alpha=0.4, label='Predicted 80% interval'
+    )
+
+
+    # hack
+ #     target = XP['target']
+ #     elevation_p = XP['demh1sv11'] if topographic_drape else 0
+ #     axs.plot(-XP.d, elevation_p - target, label='interpretation', linewidth=2, color='k')
+    # hack end
+
+    for c in col_names:
+            axs.plot(X.d, -X[c] if flip_column else X[c], label=c, linewidth=2, color='red')
+
+    ax.set_xlabel('distance along aem line (km)')
+    ax.set_ylabel('depth (m)')
+
+    if slope:
+            plt.title("d(Conductivity) vs depth")
+    else:
+        plt.title("Conductivity vs depth")
+    ax.legend()
+    axs.legend()
+
 
 
 def plot_2d_section(X: pd.DataFrame,
@@ -240,7 +349,7 @@ def plot_2d_section(X: pd.DataFrame,
 
     h = X[conf.thickness_cols]
     h = h.mul(-1)
-    elevation = X['elevation'] if topographic_drape else 0
+    elevation = X['demh1sv11'] if topographic_drape else 0
     elevation_stack = np.repeat(np.atleast_2d(elevation).T, h.shape[1], axis=1)
     h = h.add(elevation_stack)
     dd = X.d

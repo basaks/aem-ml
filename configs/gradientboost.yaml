@@ -59,7 +59,7 @@ learning:
         alpha: 0.95
         random_state: 10
     weighted_model:
-        weights:
+        weights_map:
             H: 2
             M: 1
             L: 0.5

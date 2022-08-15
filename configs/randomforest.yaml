@@ -61,7 +61,7 @@ learning:
     cross_validation:
         kfold: 5
     weighted_model:
-        weights:
+        weights_map:
             H: 2
             M: 1
             L: 0.5

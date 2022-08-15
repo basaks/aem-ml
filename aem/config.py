@@ -90,8 +90,8 @@ class Config:
         # weighted model params
         if 'weighted_model' in s['learning']:
             self.weighted_model = True
-            if 'weights_map' in s['learning']:
-                self.weights_map = s['learning']['weights_map']
+            if 'weights_map' in s['learning']["weighted_model"]:
+                self.weights_map = s['learning']["weighted_model"]['weights_map']
             else:
                 self.weights_map = None
             self.weight_col = s['data']['weight_col']
