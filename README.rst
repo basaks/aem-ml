@@ -14,7 +14,8 @@ aem
         :alt: Documentation Status
 
 
-
+Introduction
+-------------
 
 ML models for AEM Interpretation
 
@@ -22,6 +23,12 @@ ML models for AEM Interpretation
 * Free software: Apache Software License 2.0
 * Documentation: https://aem.readthedocs.io.
 
+
+Running
+-------
+
+Installation
+------------
 
 The following system dependencies are required by aem:
 
@@ -61,14 +68,8 @@ Python dependencies for aem-ml are::
    pytest-cov==2.12.1
    codecov==2.1.11
 
-Features
---------
-
-* TODO
-
-
-Quick Python Environement
-------------------
+Python Environement
+-------------------
 
 Install `virtualenv` and `virtualenvwrapper` `for your python version. <https://gist.github.com/basaks/b33ea9106c7d1d72ac3a79fdcea430eb>`_
 
