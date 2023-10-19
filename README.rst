@@ -17,7 +17,25 @@ aem
 Introduction
 -------------
 
-ML models for AEM Interpretation
+AEM Assist ML models for Geoscience Australia
+
+AEM assist is a set of machine learning regression algorithm that allows the user to interpret AEM sections from
+drillhole observations and/or interpreted segments along the conductivity depth section. AEM assist finds predictive
+relationships between the training observations (drillhole and/or interpreted sections) and the conductivity
+value which also includes the first vertical derivative of the conductivity.
+
+AEM assists accepts one or more aem interpretation/drillhole information in the form of shapefiles, and their
+corresponding conductivity maps. Currently only the following regression algorighms are supported:
+
+    * XGBRegressor
+    * GradientBoostingRegressor
+    * QuantileGradientBoosting with prediction uncertainties
+    * QuantileRandomForestRegressor with prediction uncertainties
+    * Quantiles based XGBboostRegression with prediction uncertainties
+    * CatBoost
+
+The ML algorithms are set-up in a scikit-learn compatible framework that enables quick and easy adoption of any
+scikit learn compatible ML algorithm.
 
 
 * Free software: Apache Software License 2.0
@@ -26,6 +44,10 @@ ML models for AEM Interpretation
 
 Running
 -------
+
+This code uses yaml based configuration files to train and predict. Configuration files are available in the *configs*
+directory.
+
 
 Installation
 ------------
@@ -68,7 +90,7 @@ Python dependencies for aem-ml are::
    pytest-cov==2.12.1
    codecov==2.1.11
 
-Python Environement
+Python Environment
 -------------------
 
 Install `virtualenv` and `virtualenvwrapper` `for your python version. <https://gist.github.com/basaks/b33ea9106c7d1d72ac3a79fdcea430eb>`_
