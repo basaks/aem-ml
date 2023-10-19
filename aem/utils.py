@@ -13,12 +13,13 @@ from aem.logger import aemlogger as log
 dis_tol = 100  # meters, distance tolerance used`
 
 
-def determine_and_sort_by_dominant_line_direction(line_data):
+def determine_and_sort_by_dominant_line_direction(line_data, sort_by_col: Optional[str] = 'POINT_X'):
     x_max, x_min, y_max, y_min = extent_of_data(line_data)
-    if abs(x_max-x_min) > abs(y_max-y_min):
-        sort_by_col = 'POINT_X'
-    else:
-        sort_by_col = 'POINT_Y'
+    if not sort_by_col:  # try to determine based on longest extent
+        if abs(x_max-x_min) > abs(y_max-y_min):
+            sort_by_col = 'POINT_X'
+        else:
+            sort_by_col = 'POINT_Y'
     log.info(f"sorting line by {sort_by_col}")
     line_data = line_data.sort_values(by=[sort_by_col], ascending=[True])
     return line_data
@@ -233,7 +234,7 @@ def plot_2d_section_paper(
     XP = XP[XP.cluster_line_no == cluster_line_no]
     X.d = X.d/1000
     XP.d = XP.d/1000
-    X = determine_and_sort_by_dominant_line_direction(X)
+    X = determine_and_sort_by_dominant_line_direction(X, "POINT_Y")
     XP = determine_and_sort_by_dominant_line_direction(XP, 'POINT_Y')
     if slope:
         Z = X[conf.conductivity_derivatives_cols[:NN]]
@@ -251,7 +252,7 @@ def plot_2d_section_paper(
     dd = X.d
     ddd = np.atleast_2d(dd).T
     d = np.repeat(ddd, h.shape[1], axis=1)
-    fig, ax = plt.subplots(figsize=(30, 6))
+    fig, ax = plt.subplots(figsize=(6, 6))
     cmap = plt.get_cmap('turbo')
 
     if slope:
@@ -261,8 +262,9 @@ def plot_2d_section_paper(
 
     im = ax.pcolormesh(d, h, Z, norm=norm, cmap=cmap, linewidth=1, rasterized=True, shading='auto')
     fig.colorbar(im, ax=ax)
+    # ax.set_ylim([300, 1100])
     ax.set_ylim([300, 800])
-    ax.set_xlim([68, 120])
+    ax.set_xlim([68, 83])
     axs = ax.twinx()
     if 'cv_pred' in X.columns:  # training/cross-val
             y_pred = X['cv_pred']
@@ -274,12 +276,15 @@ def plot_2d_section_paper(
         target = XP['target']
         elevation_p = XP['demh1sv11']
         pred = savgol_filter(y_pred, 11, 3)
-        ax.plot(XP.d, elevation_p - target, label='interpretation', linewidth=2, color='k')
+        ax.plot(XP.d, elevation_p - target, label='interpretation', linewidth=1.5, color='m')
 
-    pred = savgol_filter(y_pred, 11, 3)  # window size 51, polynomial order 3
-    pred_upper = savgol_filter(X.upper_quantile, 11, 3)  # window size 51, polynomial order 3
-    pred_lower = savgol_filter(X.lower_quantile, 11, 3)  # window size 51, polynomial order 3
-    ax.plot(X.d, elevation - pred, label='prediction', linewidth=2, color='m')
+    # pred = savgol_filter(y_pred, 11, 3)  # window size 51, polynomial order 3
+    pred = y_pred
+    # pred_upper = savgol_filter(pred - 2*np.sqrt(X.variance), 11, 3)  # window size 51, polynomial order 3
+    # pred_lower = savgol_filter(pred + 2*np.sqrt(X.variance), 11, 3)  # window size 51, polynomial order 3
+    pred_upper = pred - 2*np.sqrt(X.variance)
+    pred_lower = pred + 2*np.sqrt(X.variance)
+    ax.plot(X.d, elevation - pred, label='prediction', linewidth=1.5, color='k')
     y_upper = elevation-pred_upper
     y_lower = elevation-pred_lower
     # ax.plot(X.d, y_upper, "m-")
@@ -288,22 +293,22 @@ def plot_2d_section_paper(
     #     X.d,
     #     (elevation - pred) - pred_upper, (elevation - pred) - pred_lower, alpha=0.4, label='Predicted 80% interval'
     # )
-    ax.plot(X.d, elevation - pred_upper, label='percentile', linewidth=1, color='m', ls='--')
-    ax.plot(X.d, elevation - pred_lower, label='percentile', linewidth=1, color='m', ls='--')
-    plt.fill_between(
-        X.d,
-        (elevation - pred) - pred_upper, (elevation - pred) - pred_lower, alpha=0.4, label='Predicted 80% interval'
-    )
+    ax.plot(X.d, y_upper, label='lower 90% percentile', linewidth=1, color='k', ls='--')
+    ax.plot(X.d, y_lower, label='upper 90% percentile', linewidth=1, color='k', ls='--')
+    # plt.fill_between(
+    #     X.d,
+    #     (elevation - pred) - pred_upper, (elevation - pred) - pred_lower, alpha=0.4, label='Predicted 80% interval'
+    # )
 
 
     # hack
- #     target = XP['target']
- #     elevation_p = XP['demh1sv11'] if topographic_drape else 0
- #     axs.plot(-XP.d, elevation_p - target, label='interpretation', linewidth=2, color='k')
+    #     target = XP['target']
+    #     elevation_p = XP['demh1sv11'] if topographic_drape else 0
+    #     axs.plot(-XP.d, elevation_p - target, label='interpretation', linewidth=2, color='k')
     # hack end
 
     for c in col_names:
-            axs.plot(X.d, -X[c] if flip_column else X[c], label=c, linewidth=2, color='red')
+        axs.plot(X.d, -X[c] if flip_column else X[c], label=c, linewidth=1.5, color='red')
 
     ax.set_xlabel('distance along aem line (km)')
     ax.set_ylabel('depth (m)')
@@ -316,17 +321,17 @@ def plot_2d_section_paper(
     axs.legend()
 
 
-
-def plot_2d_section(X: pd.DataFrame,
-                    cluster_line_no,
-                    conf: Config,
-                    col_names: Optional[Union[str, List[str]]] = None,
-                    log_conductivity=False,
-                    slope=False,
-                    flip_column=False, v_min=0.3, v_max=0.8,
-                    topographic_drape=True,
-                    sort_vertically=True,
-                    ):
+def plot_2d_section(
+    X: pd.DataFrame,
+    cluster_line_no,
+    conf: Config,
+    col_names: Optional[Union[str, List[str]]] = None,
+    log_conductivity=False,
+    slope=False,
+    flip_column=False, v_min=0.3, v_max=0.8,
+    topographic_drape=True,
+    sort_vertically=True,
+    ):
     if col_names is None:
         col_names = []
     if isinstance(col_names, str):
