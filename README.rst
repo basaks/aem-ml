@@ -48,6 +48,13 @@ Running
 This code uses yaml based configuration files to train and predict. Configuration files are available in the *configs*
 directory.
 
+Very briefly, the workflow consists of the following steps:
+
+1. learn an ML model: `aem learn -c configs/xgboost.yaml`
+2. predict using this model: `aem predict -c configs/xgboost.yaml --model-type learn`
+3. optionally run oos validation: `aem validate -c configs/xgboost.yaml`
+4. optimise the model parameters: `aem optimise -c configs/xgboost.yaml `
+
 
 Installation
 ------------
